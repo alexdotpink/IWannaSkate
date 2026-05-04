@@ -29,21 +29,31 @@ public class RecipeSkateboard extends ShapedRecipe implements SpecialRecipeInGui
     }
 
     public boolean matches(CraftingInput container, Level level) {
-        if (super.matches(container, level)) {
-            ItemStack wheels1 = ItemStack.EMPTY;
-            ItemStack wheels2 = ItemStack.EMPTY;
-            for (int i = 0; i < container.size(); ++i) {
-                if (!container.getItem(i).isEmpty() && container.getItem(i).is(IWSTags.SKATEBOARD_WHEELS)) {
+        ItemStack wheels1 = ItemStack.EMPTY;
+        ItemStack wheels2 = ItemStack.EMPTY;
+        int decks = 0;
+        int trucks = 0;
+        int wheels = 0;
+        for (int i = 0; i < container.size(); ++i) {
+            ItemStack stack = container.getItem(i);
+            if (!stack.isEmpty()) {
+                if (stack.is(IWSItemRegistry.SKATEBOARD_DECK.get())) {
+                    decks++;
+                } else if (stack.is(IWSItemRegistry.SKATEBOARD_TRUCK.get())) {
+                    trucks++;
+                } else if (stack.is(IWSTags.SKATEBOARD_WHEELS)) {
                     if (wheels1.isEmpty()) {
-                        wheels1 = container.getItem(i);
+                        wheels1 = stack;
                     } else if (wheels2.isEmpty()) {
-                        wheels2 = container.getItem(i);
+                        wheels2 = stack;
                     }
+                    wheels++;
+                } else {
+                    return false;
                 }
             }
-            return ItemStack.isSameItem(wheels1, wheels2);
         }
-        return false;
+        return decks == 1 && trucks == 2 && wheels == 2 && ItemStack.isSameItem(wheels1, wheels2);
     }
 
     public ItemStack assemble(CraftingInput container, HolderLookup.Provider registryAccess) {

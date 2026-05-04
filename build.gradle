@@ -69,6 +69,8 @@ sourceSets.main.resources {
 }
 
 tasks.named('processResources', ProcessResources).configure {
+    exclude 'assets/iwannaskate/skate_model_mappings/README.txt'
+
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,

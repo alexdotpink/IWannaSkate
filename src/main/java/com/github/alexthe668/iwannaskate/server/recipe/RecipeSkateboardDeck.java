@@ -29,20 +29,22 @@ public class RecipeSkateboardDeck  extends ShapedRecipe implements SpecialRecipe
     }
 
     public boolean matches(CraftingInput container, Level level) {
-        if(super.matches(container, level)){
-            ItemStack lastTagged = ItemStack.EMPTY;
-            for(int i = 0; i < container.size(); i++){
-                if(container.getItem(i).is(IWSTags.DECK_MATERIALS)){
-                    if(!lastTagged.isEmpty() && !ItemStack.isSameItem(lastTagged, container.getItem(i))){
-                        return false;
-                    }else{
-                        lastTagged = container.getItem(i);
-                    }
+        ItemStack lastTagged = ItemStack.EMPTY;
+        int deckMaterials = 0;
+        for(int i = 0; i < container.size(); i++){
+            ItemStack stack = container.getItem(i);
+            if(!stack.isEmpty()){
+                if(!stack.is(IWSTags.DECK_MATERIALS)){
+                    return false;
                 }
+                if(!lastTagged.isEmpty() && !ItemStack.isSameItem(lastTagged, stack)){
+                    return false;
+                }
+                lastTagged = stack;
+                deckMaterials++;
             }
-            return true;
         }
-        return false;
+        return deckMaterials == 3;
     }
 
 
