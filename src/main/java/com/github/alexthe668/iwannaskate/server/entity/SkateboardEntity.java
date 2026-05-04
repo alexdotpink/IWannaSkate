@@ -155,9 +155,7 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         if (!this.getItemStack().isEmpty()) {
-            CompoundTag stackTag = new CompoundTag();
-            this.getItemStack().save(this.registryAccess(), stackTag);
-            tag.put("BoardStack", stackTag);
+            tag.put("BoardStack", this.getItemStack().save(this.registryAccess(), new CompoundTag()));
         }
         tag.putFloat("TotalDistanceTraveled", (float) totalDistanceTraveled);
         tag.putFloat("LastDamagedDist", (float) lastDamagedDistance);
