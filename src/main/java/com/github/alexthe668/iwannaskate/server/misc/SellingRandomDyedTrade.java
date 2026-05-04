@@ -1,12 +1,14 @@
 package com.github.alexthe668.iwannaskate.server.misc;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.VillagerTrades;
-import net.minecraft.world.item.DyeableLeatherItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.ItemCost;
 
 public class SellingRandomDyedTrade implements VillagerTrades.ItemListing {
     private final ItemStack tradeItem;
@@ -25,9 +27,7 @@ public class SellingRandomDyedTrade implements VillagerTrades.ItemListing {
 
     public MerchantOffer getOffer(Entity tradingWith, RandomSource randomSource) {
         ItemStack selling = tradeItem.copy();
-        if(selling.getItem() instanceof DyeableLeatherItem dyeableLeatherItem){
-            dyeableLeatherItem.setColor(selling, (int) (randomSource.nextFloat() * 0xFFFFFF));
-        }
-        return new MerchantOffer(new ItemStack(Items.EMERALD, this.price), selling, this.maxUses, this.xpValue, this.priceMultiplier);
+        selling.set(DataComponents.DYED_COLOR, new DyedItemColor((int) (randomSource.nextFloat() * 0xFFFFFF), true));
+        return new MerchantOffer(new ItemCost(Items.EMERALD, this.price), selling, this.maxUses, this.xpValue, this.priceMultiplier);
     }
 }

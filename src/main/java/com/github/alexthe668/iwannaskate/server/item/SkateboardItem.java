@@ -36,12 +36,6 @@ public class SkateboardItem extends BaseSkateboardItem {
         return 1;
     }
 
-    @Override
-    public int getDefaultTooltipHideFlags(@NotNull ItemStack stack) {
-        //hide enchantments so that they can be truncated
-        return ItemStack.TooltipPart.ENCHANTMENTS.getMask();
-    }
-
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         HitResult raytraceresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.ANY);
@@ -49,7 +43,7 @@ public class SkateboardItem extends BaseSkateboardItem {
             return InteractionResultHolder.pass(itemstack);
         } else {
             Vec3 vector3d = player.getViewVector(1.0F);
-            List<Entity> list = level.getEntities(player, player.getBoundingBox().expandTowards(vector3d.scale(player.getBlockReach())).inflate(1.0D), PICKABLE_ENTITIES);
+            List<Entity> list = level.getEntities(player, player.getBoundingBox().expandTowards(vector3d.scale(player.blockInteractionRange())).inflate(1.0D), PICKABLE_ENTITIES);
             if (!list.isEmpty()) {
                 Vec3 vector3d1 = player.getEyePosition(1.0F);
 

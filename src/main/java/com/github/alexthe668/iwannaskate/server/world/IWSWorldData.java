@@ -1,7 +1,9 @@
 package com.github.alexthe668.iwannaskate.server.world;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -17,6 +19,7 @@ public class IWSWorldData extends SavedData {
     private float skaterSpawnChance;
     private UUID skaterUUID;
     private static Map<Level, IWSWorldData> dataMap = new HashMap<>();
+    private static final SavedData.Factory<IWSWorldData> FACTORY = new SavedData.Factory<>(IWSWorldData::new, IWSWorldData::load, DataFixTypes.LEVEL);
 
     public IWSWorldData() {
         super();
@@ -28,7 +31,7 @@ public class IWSWorldData extends SavedData {
             IWSWorldData fromMap = dataMap.get(overworld);
             if(fromMap == null){
                 DimensionDataStorage storage = overworld.getDataStorage();
-                IWSWorldData data = storage.computeIfAbsent(IWSWorldData::load, IWSWorldData::new, IDENTIFIER);
+                IWSWorldData data = storage.computeIfAbsent(FACTORY, IDENTIFIER);
                 if (data != null) {
                     data.setDirty();
                 }
@@ -40,7 +43,7 @@ public class IWSWorldData extends SavedData {
         return null;
     }
 
-    public static IWSWorldData load(CompoundTag nbt) {
+    public static IWSWorldData load(CompoundTag nbt, HolderLookup.Provider provider) {
         IWSWorldData data = new IWSWorldData();
         if (nbt.contains("SkaterSpawnDelay", 99)) {
             data.skaterSpawnDelay = nbt.getInt("SkaterSpawnDelay");
@@ -76,7 +79,7 @@ public class IWSWorldData extends SavedData {
 
 
     @Override
-    public CompoundTag save(CompoundTag compound) {
+    public CompoundTag save(CompoundTag compound, HolderLookup.Provider provider) {
         compound.putInt("beachedCachalotSpawnDelay", this.skaterSpawnDelay);
         compound.putFloat("beachedCachalotSpawnChance", this.skaterSpawnChance);
         if (this.skaterUUID != null) {

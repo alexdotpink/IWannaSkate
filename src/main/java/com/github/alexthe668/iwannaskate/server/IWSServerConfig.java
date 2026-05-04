@@ -1,25 +1,25 @@
 package com.github.alexthe668.iwannaskate.server;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class IWSServerConfig {
 
-    public final ForgeConfigSpec.BooleanValue spawnSkaterSkeletons;
-    public final ForgeConfigSpec.BooleanValue skaterSkeletonsUseSkateboards;
-    public final ForgeConfigSpec.DoubleValue skaterSkeletonsHolidayWheelsDropChance;
-    public final ForgeConfigSpec.BooleanValue spawnWanderingSkaters;
-    public final ForgeConfigSpec.IntValue wanderingSkaterSpawnDelay;
-    public final ForgeConfigSpec.DoubleValue wanderingSkaterSpawnChance;
-    public final ForgeConfigSpec.BooleanValue convertVillagersToNitwits;
-    public final ForgeConfigSpec.BooleanValue convertNitwitsToSkaters;
+    public final ModConfigSpec.BooleanValue spawnSkaterSkeletons;
+    public final ModConfigSpec.BooleanValue skaterSkeletonsUseSkateboards;
+    public final ModConfigSpec.DoubleValue skaterSkeletonsHolidayWheelsDropChance;
+    public final ModConfigSpec.BooleanValue spawnWanderingSkaters;
+    public final ModConfigSpec.IntValue wanderingSkaterSpawnDelay;
+    public final ModConfigSpec.DoubleValue wanderingSkaterSpawnChance;
+    public final ModConfigSpec.BooleanValue convertVillagersToNitwits;
+    public final ModConfigSpec.BooleanValue convertNitwitsToSkaters;
 
-    public final ForgeConfigSpec.BooleanValue enableSlowMotion;
-    public final ForgeConfigSpec.BooleanValue playersSlowMotion;
-    public final ForgeConfigSpec.IntValue slowMotionDistance;
+    public final ModConfigSpec.BooleanValue enableSlowMotion;
+    public final ModConfigSpec.BooleanValue playersSlowMotion;
+    public final ModConfigSpec.IntValue slowMotionDistance;
 
-    public final ForgeConfigSpec.DoubleValue skateboardExpAnvilRateModifier;
+    public final ModConfigSpec.DoubleValue skateboardExpAnvilRateModifier;
 
-    public IWSServerConfig(final ForgeConfigSpec.Builder builder) {
+    public IWSServerConfig(final ModConfigSpec.Builder builder) {
         builder.push("mobs");
         spawnSkaterSkeletons = builder.comment("when enabled, skater skeletons will spawn where applicable.").translation("spawn_skater_skeletons").define("spawn_skater_skeletons", true);
         skaterSkeletonsUseSkateboards = builder.comment("when enabled, skater skeletons will skate using the skateboards they spawn with or any they pick up.").translation("skater_skeletons_use_skateboards").define("skater_skeletons_use_skateboards", true);

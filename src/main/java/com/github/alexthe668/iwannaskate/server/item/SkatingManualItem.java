@@ -29,8 +29,8 @@ public class SkatingManualItem extends Item {
         return new InteractionResultHolder(InteractionResult.PASS, itemStackIn);
     }
 
-    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
-        super.appendHoverText(stack, worldIn, tooltip, flagIn);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+        super.appendHoverText(stack, context, tooltip, flagIn);
         tooltip.add(Component.translatable("item.iwannaskate.skating_manual.desc").withStyle(ChatFormatting.GRAY));
     }
 }

@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Type;
@@ -118,14 +118,14 @@ public class SkateModelMapping {
             EntityType<?> entityType = null;
             TagKey<EntityType<?>> tagkey = null;
             if (entityTypeString.startsWith("#")) {
-                ResourceLocation readStr = new ResourceLocation(entityTypeString.substring(1));
+                ResourceLocation readStr = ResourceLocation.parse(entityTypeString.substring(1));
                 tagkey = TagKey.create(Registries.ENTITY_TYPE, readStr);
             } else {
-                ResourceLocation readsStr= new ResourceLocation(entityTypeString);
-                if(!ForgeRegistries.ENTITY_TYPES.containsKey(readsStr)){
+                ResourceLocation readsStr= ResourceLocation.parse(entityTypeString);
+                if(!BuiltInRegistries.ENTITY_TYPE.containsKey(readsStr)){
                     throw new JsonParseException("missing entity type");
                 }
-                entityType = ForgeRegistries.ENTITY_TYPES.getValue(readsStr);
+                entityType = BuiltInRegistries.ENTITY_TYPE.get(readsStr);
             }
             List<String> body = deserializeParts(jsonobject, "body");
             List<String> head = deserializeParts(jsonobject, "head");

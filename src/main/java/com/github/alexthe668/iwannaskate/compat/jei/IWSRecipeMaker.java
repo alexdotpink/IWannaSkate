@@ -14,38 +14,39 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.WoolCarpetBlock;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class IWSRecipeMaker {
 
-    public static List<CraftingRecipe> createDeckRecipes() {
+    public static List<RecipeHolder<CraftingRecipe>> createDeckRecipes() {
         return SkateboardMaterials.getSkateboardMaterials().stream().map(woodItem -> createDeckRecipe(woodItem)).toList();
     }
 
-    public static List<CraftingRecipe> createSkateboardRecipes() {
-        List<CraftingRecipe> recipes = new ArrayList<>();
+    public static List<RecipeHolder<CraftingRecipe>> createSkateboardRecipes() {
+        List<RecipeHolder<CraftingRecipe>> recipes = new ArrayList<>();
         SkateboardMaterials.getSkateboardMaterials().stream().forEach(woodItem -> recipes.addAll(createSkateboardRecipesForDeck(woodItem)));
         return recipes;
     }
 
-    public static List<CraftingRecipe> createSkateboardBannerRecipes() {
-        List<CraftingRecipe> recipes = new ArrayList<>();
+    public static List<RecipeHolder<CraftingRecipe>> createSkateboardBannerRecipes() {
+        List<RecipeHolder<CraftingRecipe>> recipes = new ArrayList<>();
         SkateboardMaterials.getSkateboardMaterials().stream().forEach(woodItem -> recipes.addAll(createSkateboardBannerRecipes(woodItem)));
         return recipes;
     }
 
-    public static List<CraftingRecipe> createSkateboardGripRecipes() {
-        List<CraftingRecipe> recipes = new ArrayList<>();
+    public static List<RecipeHolder<CraftingRecipe>> createSkateboardGripRecipes() {
+        List<RecipeHolder<CraftingRecipe>> recipes = new ArrayList<>();
         SkateboardMaterials.getSkateboardMaterials().stream().forEach(woodItem -> recipes.addAll(createSkateboardGripRecipes(woodItem)));
         return recipes;
     }
 
-    private static List<CraftingRecipe> createSkateboardBannerRecipes(Item woodItem) {
+    private static List<RecipeHolder<CraftingRecipe>> createSkateboardBannerRecipes(Item woodItem) {
         String group = "jei.skateboard_deck";
-        List<CraftingRecipe> recipes = new ArrayList<>();
+        List<RecipeHolder<CraftingRecipe>> recipes = new ArrayList<>();
         ItemStack input = createSkateboardForWood(woodItem);
         for(Item banner : SkateboardMaterials.getBanners()){
             if(banner instanceof BannerItem){
@@ -55,17 +56,17 @@ public class IWSRecipeMaker {
                 bannerTag.putInt("Base", ((BannerItem)banner).getColor().getId());
                 data.setBanner(bannerTag);
                 SkateboardData.setStackData(output, data);
-                ResourceLocation id = new ResourceLocation(IWannaSkateMod.MODID, "jei.skateboard_banner_" + ForgeRegistries.ITEMS.getKey(woodItem).getPath() + banner.getDescriptionId());
+                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "jei.skateboard_banner_" + BuiltInRegistries.ITEM.getKey(woodItem).getPath() + banner.getDescriptionId());
                 NonNullList<Ingredient> inputs = NonNullList.of(Ingredient.EMPTY, Ingredient.of(input), Ingredient.of(banner));
-                recipes.add(new ShapelessRecipe(id, group, CraftingBookCategory.MISC, output, inputs));
+                recipes.add(holder(id, new ShapelessRecipe(group, CraftingBookCategory.MISC, output, inputs)));
             }
         }
         return recipes;
     }
 
-    private static List<CraftingRecipe> createSkateboardGripRecipes(Item woodItem) {
+    private static List<RecipeHolder<CraftingRecipe>> createSkateboardGripRecipes(Item woodItem) {
         String group = "jei.skateboard_deck";
-        List<CraftingRecipe> recipes = new ArrayList<>();
+        List<RecipeHolder<CraftingRecipe>> recipes = new ArrayList<>();
         ItemStack input = createSkateboardForWood(woodItem);
         for(Item carpet : SkateboardMaterials.getGrips()){
             if(Block.byItem(carpet) instanceof WoolCarpetBlock carpetBlock){
@@ -73,15 +74,15 @@ public class IWSRecipeMaker {
                 SkateboardData data = SkateboardData.fromStack(input);
                 data.setGripTape(carpetBlock.getColor());
                 SkateboardData.setStackData(output, data);
-                ResourceLocation id = new ResourceLocation(IWannaSkateMod.MODID, "jei.skateboard_grip_" + ForgeRegistries.ITEMS.getKey(woodItem).getPath() + carpet.getDescriptionId());
+                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "jei.skateboard_grip_" + BuiltInRegistries.ITEM.getKey(woodItem).getPath() + carpet.getDescriptionId());
                 NonNullList<Ingredient> inputs = NonNullList.of(Ingredient.EMPTY, Ingredient.of(input), Ingredient.of(carpet));
-                recipes.add(new ShapelessRecipe(id, group, CraftingBookCategory.MISC, output, inputs));
+                recipes.add(holder(id, new ShapelessRecipe(group, CraftingBookCategory.MISC, output, inputs)));
             }
         }
         return recipes;
     }
 
-    private static CraftingRecipe createDeckRecipe(Item deckMaterial) {
+    private static RecipeHolder<CraftingRecipe> createDeckRecipe(Item deckMaterial) {
         String group = "jei.skateboard_deck";
         ItemStack input = new ItemStack(deckMaterial);
         ItemStack output = createDeckForWood(deckMaterial);
@@ -91,16 +92,17 @@ public class IWSRecipeMaker {
                 Ingredient.EMPTY, woodIngredient, Ingredient.EMPTY,
                 woodIngredient, Ingredient.EMPTY, Ingredient.EMPTY
         );
-        ResourceLocation id = new ResourceLocation(IWannaSkateMod.MODID, "jei.skateboard_deck_" + ForgeRegistries.ITEMS.getKey(deckMaterial).getPath());
-        return new ShapedRecipe(id, group, CraftingBookCategory.MISC, 3, 3, inputs, output);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "jei.skateboard_deck_" + BuiltInRegistries.ITEM.getKey(deckMaterial).getPath());
+        ShapedRecipePattern pattern = new ShapedRecipePattern(3, 3, inputs, Optional.empty());
+        return holder(id, new ShapedRecipe(group, CraftingBookCategory.MISC, pattern, output));
     }
 
-    private static List<CraftingRecipe> createSkateboardRecipesForDeck(Item woodItem) {
-        List<CraftingRecipe> recipes = new ArrayList<>();
+    private static List<RecipeHolder<CraftingRecipe>> createSkateboardRecipesForDeck(Item woodItem) {
+        List<RecipeHolder<CraftingRecipe>> recipes = new ArrayList<>();
         String group = "jei.skateboard";
         for(Item wheel : SkateboardMaterials.getSkateboardWheels()){
             ItemStack output = new ItemStack(IWSItemRegistry.SKATEBOARD.get());
-            SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(woodItem));
+            SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(woodItem));
             data.setWheelType(SkateboardWheels.fromItem(wheel));
             SkateboardData.setStackData(output, data);
             Ingredient deckIngredient = Ingredient.of(createDeckForWood(woodItem));
@@ -111,24 +113,29 @@ public class IWSRecipeMaker {
                     truckIngredient, deckIngredient, truckIngredient,
                     wheelIngredient, Ingredient.EMPTY, wheelIngredient
             );
-            ResourceLocation id = new ResourceLocation(IWannaSkateMod.MODID, "jei.skateboard_" + ForgeRegistries.ITEMS.getKey(woodItem).getPath());
-            recipes.add(new ShapedRecipe(id, group, CraftingBookCategory.MISC, 3, 3, inputs, output));
+            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "jei.skateboard_" + BuiltInRegistries.ITEM.getKey(woodItem).getPath() + "_" + BuiltInRegistries.ITEM.getKey(wheel).getPath());
+            ShapedRecipePattern pattern = new ShapedRecipePattern(3, 3, inputs, Optional.empty());
+            recipes.add(holder(id, new ShapedRecipe(group, CraftingBookCategory.MISC, pattern, output)));
         }
         return recipes;
     }
 
     private static ItemStack createDeckForWood(Item deck) {
         ItemStack stack = new ItemStack(IWSItemRegistry.SKATEBOARD_DECK.get());
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(deck));
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(deck));
         SkateboardData.setStackData(stack, data);
         return stack;
     }
 
     private static ItemStack createSkateboardForWood(Item deck) {
         ItemStack stack = new ItemStack(IWSItemRegistry.SKATEBOARD.get());
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(deck));
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(deck));
         SkateboardData.setStackData(stack, data);
         return stack;
+    }
+
+    private static RecipeHolder<CraftingRecipe> holder(ResourceLocation id, CraftingRecipe recipe) {
+        return new RecipeHolder<>(id, recipe);
     }
 
 }

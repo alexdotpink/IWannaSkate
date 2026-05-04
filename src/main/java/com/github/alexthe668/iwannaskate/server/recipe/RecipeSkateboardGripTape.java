@@ -5,12 +5,12 @@ import com.github.alexthe668.iwannaskate.server.item.IWSItemRegistry;
 import com.github.alexthe668.iwannaskate.server.item.SkateboardData;
 import com.github.alexthe668.iwannaskate.server.item.SkateboardWheels;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -21,14 +21,18 @@ import net.minecraft.world.level.block.WoolCarpetBlock;
 public class RecipeSkateboardGripTape extends CustomRecipe implements SpecialRecipeInGuideBook {
 
     public RecipeSkateboardGripTape(ResourceLocation name, CraftingBookCategory category) {
-        super(name, category);
+        super(category);
     }
 
-    public boolean matches(CraftingContainer craftingContainer, Level level) {
+    public RecipeSkateboardGripTape(CraftingBookCategory category) {
+        this(ResourceLocation.fromNamespaceAndPath("iwannaskate", "skateboard_grip_tape"), category);
+    }
+
+    public boolean matches(CraftingInput craftingContainer, Level level) {
         ItemStack skateboard = ItemStack.EMPTY;
         ItemStack carpetStack = ItemStack.EMPTY;
 
-        for (int i = 0; i < craftingContainer.getContainerSize(); ++i) {
+        for (int i = 0; i < craftingContainer.size(); ++i) {
             ItemStack itemstack2 = craftingContainer.getItem(i);
             if (!itemstack2.isEmpty()) {
                 Block block = Block.byItem(itemstack2.getItem());
@@ -58,11 +62,11 @@ public class RecipeSkateboardGripTape extends CustomRecipe implements SpecialRec
         return !skateboard.isEmpty() && !carpetStack.isEmpty();
     }
 
-    public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput container, HolderLookup.Provider registryAccess) {
         ItemStack carpet = ItemStack.EMPTY;
         ItemStack skateboard = ItemStack.EMPTY;
 
-        for (int i = 0; i < container.getContainerSize(); ++i) {
+        for (int i = 0; i < container.size(); ++i) {
             ItemStack itemstack2 = container.getItem(i);
             if (!itemstack2.isEmpty()) {
                 Block block = Block.byItem(itemstack2.getItem());

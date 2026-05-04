@@ -1,23 +1,23 @@
 package com.github.alexthe668.iwannaskate.client;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class IWSClientConfig {
 
-    public final ForgeConfigSpec.BooleanValue showInertiaIndicator;
-    public final ForgeConfigSpec.BooleanValue hideExperienceBar;
-    public final ForgeConfigSpec.IntValue inertiaIndicatorX;
-    public final ForgeConfigSpec.IntValue inertiaIndicatorY;
-    public final ForgeConfigSpec.BooleanValue flipBoardItems;
-    public final ForgeConfigSpec.BooleanValue overcaffeniatedOverlay;
+    public final ModConfigSpec.BooleanValue showInertiaIndicator;
+    public final ModConfigSpec.BooleanValue hideExperienceBar;
+    public final ModConfigSpec.IntValue inertiaIndicatorX;
+    public final ModConfigSpec.IntValue inertiaIndicatorY;
+    public final ModConfigSpec.BooleanValue flipBoardItems;
+    public final ModConfigSpec.BooleanValue overcaffeniatedOverlay;
 
-    public final ForgeConfigSpec.BooleanValue invertSide;
-    public final ForgeConfigSpec.BooleanValue animateAllEntityModels;
-    public final ForgeConfigSpec.BooleanValue skateboardLoopSounds;
+    public final ModConfigSpec.BooleanValue invertSide;
+    public final ModConfigSpec.BooleanValue animateAllEntityModels;
+    public final ModConfigSpec.BooleanValue skateboardLoopSounds;
 
-    public final ForgeConfigSpec.BooleanValue rotateCameraOnBoard;
+    public final ModConfigSpec.BooleanValue rotateCameraOnBoard;
 
-    public IWSClientConfig(final ForgeConfigSpec.Builder builder) {
+    public IWSClientConfig(final ModConfigSpec.Builder builder) {
         builder.push("display");
         showInertiaIndicator = builder.comment("when enabled, shows a skateboard icon on the user HUD that indicates their current inertia.").translation("show_inertia_indicator").define("show_inertia_indicator", true);
         hideExperienceBar = builder.comment("when enabled, hides the experience bar when on a skateboard, so that it will not clutter the UI.").translation("hide_experience_bar").define("hide_experience_bar", true);

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.ItemCost;
 
 public class SellingRandomSkateboardTrade implements VillagerTrades.ItemListing {
     private final ItemStack tradeItem;
@@ -29,6 +30,6 @@ public class SellingRandomSkateboardTrade implements VillagerTrades.ItemListing 
         ItemStack dataCopy = tradeItem.copy();
         SkateboardData data = SkateboardMaterials.generateRandomData(SkateboardMaterials.getSkateboardMaterials(), randomSource, tradeItem.getItem() == IWSItemRegistry.SKATEBOARD_DECK.get());
         SkateboardData.setStackData(dataCopy, data);
-        return new MerchantOffer(new ItemStack(Items.EMERALD, this.price), dataCopy, this.maxUses, this.xpValue, this.priceMultiplier);
+        return new MerchantOffer(new ItemCost(Items.EMERALD, this.price), dataCopy, this.maxUses, this.xpValue, this.priceMultiplier);
     }
 }

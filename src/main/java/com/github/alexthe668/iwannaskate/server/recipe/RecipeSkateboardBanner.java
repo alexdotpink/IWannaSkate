@@ -4,15 +4,14 @@ import com.github.alexthe666.citadel.recipe.SpecialRecipeInGuideBook;
 import com.github.alexthe668.iwannaskate.server.item.IWSItemRegistry;
 import com.github.alexthe668.iwannaskate.server.item.SkateboardData;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.BannerItem;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -20,14 +19,18 @@ import net.minecraft.world.level.Level;
 
 public class RecipeSkateboardBanner extends CustomRecipe implements SpecialRecipeInGuideBook {
     public RecipeSkateboardBanner(ResourceLocation name, CraftingBookCategory category) {
-        super(name, category);
+        super(category);
     }
 
-    public boolean matches(CraftingContainer craftingContainer, Level level) {
+    public RecipeSkateboardBanner(CraftingBookCategory category) {
+        this(ResourceLocation.fromNamespaceAndPath("iwannaskate", "skateboard_banner"), category);
+    }
+
+    public boolean matches(CraftingInput craftingContainer, Level level) {
         ItemStack skateboard = ItemStack.EMPTY;
         ItemStack bannerStack = ItemStack.EMPTY;
 
-        for(int i = 0; i < craftingContainer.getContainerSize(); ++i) {
+        for(int i = 0; i < craftingContainer.size(); ++i) {
             ItemStack itemstack2 = craftingContainer.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack2.getItem() instanceof BannerItem) {
@@ -57,11 +60,11 @@ public class RecipeSkateboardBanner extends CustomRecipe implements SpecialRecip
         return !skateboard.isEmpty() && !bannerStack.isEmpty();
     }
 
-    public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput container, HolderLookup.Provider registryAccess) {
         ItemStack banner = ItemStack.EMPTY;
         ItemStack skateboard = ItemStack.EMPTY;
 
-        for(int i = 0; i < container.getContainerSize(); ++i) {
+        for(int i = 0; i < container.size(); ++i) {
             ItemStack itemstack2 = container.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack2.getItem() instanceof BannerItem) {
@@ -75,8 +78,7 @@ public class RecipeSkateboardBanner extends CustomRecipe implements SpecialRecip
         if (skateboard.isEmpty()) {
             return skateboard;
         } else {
-            CompoundTag compoundtag = BlockItem.getBlockEntityData(banner);
-            CompoundTag compoundtag1 = compoundtag == null ? new CompoundTag() : compoundtag.copy();
+            CompoundTag compoundtag1 = new CompoundTag();
             compoundtag1.putInt("Base", ((BannerItem)banner.getItem()).getColor().getId());
 
             SkateboardData data = SkateboardData.fromStack(skateboard);
@@ -118,8 +120,7 @@ public class RecipeSkateboardBanner extends CustomRecipe implements SpecialRecip
         if (skateboard.isEmpty()) {
             return skateboard;
         } else {
-            CompoundTag compoundtag = BlockItem.getBlockEntityData(banner);
-            CompoundTag compoundtag1 = compoundtag == null ? new CompoundTag() : compoundtag.copy();
+            CompoundTag compoundtag1 = new CompoundTag();
             compoundtag1.putInt("Base", ((BannerItem)banner.getItem()).getColor().getId());
 
             SkateboardData data = SkateboardData.fromStack(skateboard);

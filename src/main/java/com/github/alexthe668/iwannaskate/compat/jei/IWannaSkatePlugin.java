@@ -4,13 +4,14 @@ import com.github.alexthe668.iwannaskate.server.item.IWSItemRegistry;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.resources.ResourceLocation;
 
 @JeiPlugin
 public class IWannaSkatePlugin implements IModPlugin {
-    public static final ResourceLocation MOD = new ResourceLocation("iwannaskate:iwannaskate");
+    public static final ResourceLocation MOD = ResourceLocation.parse("iwannaskate:iwannaskate");
 
     @Override
     public ResourceLocation getPluginUid() {
@@ -27,7 +28,7 @@ public class IWannaSkatePlugin implements IModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistration registration) {
-        registration.registerSubtypeInterpreter(IWSItemRegistry.SKATEBOARD_DECK.get(), SkateboardSubtypeInterpreter.INSTANCE);
-        registration.registerSubtypeInterpreter(IWSItemRegistry.SKATEBOARD.get(), SkateboardSubtypeInterpreter.INSTANCE);
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, IWSItemRegistry.SKATEBOARD_DECK.get(), SkateboardSubtypeInterpreter.INSTANCE);
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, IWSItemRegistry.SKATEBOARD.get(), SkateboardSubtypeInterpreter.INSTANCE);
     }
 }

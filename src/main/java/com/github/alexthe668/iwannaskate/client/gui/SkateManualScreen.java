@@ -24,11 +24,11 @@ public class SkateManualScreen extends GuiBasicBook {
 
     @Override
     public ResourceLocation getRootPage() {
-        return new ResourceLocation(IWannaSkateMod.MODID, "book/skate_manual/root.json");
+        return ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "book/skate_manual/root.json");
     }
 
     @Override
-    public String getTextFileDirectory() {
-        return IWannaSkateMod.MODID + ":book/skate_manual/";
+    public ResourceLocation getTextFileDirectory() {
+        return ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "book/skate_manual/");
     }
 }

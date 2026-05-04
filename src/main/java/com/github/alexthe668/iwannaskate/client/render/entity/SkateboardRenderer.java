@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.ForgeRenderTypes;
+import net.neoforged.neoforge.client.NeoForgeRenderTypes;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -26,8 +26,8 @@ import static net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY;
 public class SkateboardRenderer extends EntityRenderer<SkateboardEntity> {
 
     private static final SkateboardModel SKATEBOARD_MODEL = new SkateboardModel();
-    private static final ResourceLocation RAINBOW_TRAIL_TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/entity/skateboard/wheels/rainbow_trail.png");
-    private static final ResourceLocation AESTHETIC_TRAIL_TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/entity/skateboard/wheels/aesthetic_trail.png");
+    private static final ResourceLocation RAINBOW_TRAIL_TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/entity/skateboard/wheels/rainbow_trail.png");
+    private static final ResourceLocation AESTHETIC_TRAIL_TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/entity/skateboard/wheels/aesthetic_trail.png");
     private LightningRender lightningRender = new LightningRender();
     private LightningBoltData.BoltRenderInfo lightningBoltData = new LightningBoltData.BoltRenderInfo(1.3F, 0.15F, 0.5F, 0.25F, new Vector4f(0.1F, 0.1F, 0.1F, 0.5F), 0.45F);
 
@@ -136,9 +136,9 @@ public class SkateboardRenderer extends EntityRenderer<SkateboardEntity> {
         PoseStack.Pose posestack$pose = poseStack.last();
         Matrix4f matrix4f = posestack$pose.pose();
         Matrix3f matrix3f = posestack$pose.normal();
-        VertexConsumer rainbowConsumer = bufferSource.getBuffer(ForgeRenderTypes.getUnlitTranslucent(rainbow ? RAINBOW_TRAIL_TEXTURE : AESTHETIC_TRAIL_TEXTURE, false));
+        VertexConsumer rainbowConsumer = bufferSource.getBuffer(NeoForgeRenderTypes.getUnlitTranslucent(rainbow ? RAINBOW_TRAIL_TEXTURE : AESTHETIC_TRAIL_TEXTURE, false));
         float height = Mth.clamp((float)(sub.length() * 0.5F), 0, 1.2F);
-        float moveAlong = (entity.tickCount + Minecraft.getInstance().getFrameTime()) * -0.1F;
+        float moveAlong = (entity.tickCount + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) * -0.1F;
         rainbowVertex(rainbowConsumer, matrix4f, matrix3f, 240, 0.3F,  height, 0, moveAlong + 1, 0);
         rainbowVertex(rainbowConsumer, matrix4f, matrix3f, 240, 0.7F,  height, 1, moveAlong + 1, 0);
         rainbowVertex(rainbowConsumer, matrix4f, matrix3f, 240, 0.7F, 0, 1, moveAlong, 1);
@@ -147,7 +147,7 @@ public class SkateboardRenderer extends EntityRenderer<SkateboardEntity> {
     }
 
     private static void rainbowVertex(VertexConsumer p_114090_, Matrix4f p_114091_, Matrix3f p_114092_, int p_114093_, float p_114094_, float p_114095_, float p_114096_, float p_114097_, float alpha) {
-        p_114090_.vertex(p_114091_, p_114094_ - 0.5F, (float)p_114095_, 0.0F).color(1F, 1F, 1F,  alpha).uv((float)p_114096_, (float)p_114097_).overlayCoords(NO_OVERLAY).uv2(240).normal(p_114092_, 0.0F, -1.0F, 0.0F).endVertex();
+        p_114090_.addVertex(p_114091_, p_114094_ - 0.5F, (float)p_114095_, 0.0F).setColor(1F, 1F, 1F,  alpha).setUv((float)p_114096_, (float)p_114097_).setOverlay(NO_OVERLAY).setLight(240).setNormal(0.0F, -1.0F, 0.0F);
     }
 
     @Override

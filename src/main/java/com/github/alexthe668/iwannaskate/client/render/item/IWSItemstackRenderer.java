@@ -64,7 +64,7 @@ public class IWSItemstackRenderer extends BlockEntityWithoutLevelRenderer {
                 }
             }
             SkateboardData data = SkateboardData.fromStack(itemStack);
-            if (itemStack.getTag() != null && itemStack.getTag().getBoolean("IsCreativeTab") && randomSkateData != null) {
+            if (SkateboardData.getCustomTag(itemStack).getBoolean("IsCreativeTab") && randomSkateData != null) {
                 data = randomSkateData;
                 isCreativeTab = true;
             }
@@ -76,7 +76,7 @@ public class IWSItemstackRenderer extends BlockEntityWithoutLevelRenderer {
             if (isCreativeTab) {
                 float lerpTicks = ticks;
                 if(!Minecraft.getInstance().isPaused()){
-                    lerpTicks += Minecraft.getInstance().getFrameTime();
+                    lerpTicks += Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
                 }
                 SKATEBOARD_MODEL.animateCreativeTab(lerpTicks);
             }

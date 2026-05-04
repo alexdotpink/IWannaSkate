@@ -6,44 +6,60 @@ import com.github.alexthe668.iwannaskate.server.item.SkateboardData;
 import com.github.alexthe668.iwannaskate.server.item.SkateboardWheels;
 import com.github.alexthe668.iwannaskate.server.misc.IWSTags;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.level.Level;
+import java.util.Optional;
 
 public class RecipeSkateboard extends ShapedRecipe implements SpecialRecipeInGuideBook {
     public RecipeSkateboard(ResourceLocation name, CraftingBookCategory category) {
-        super(name, "", category, 3, 2, NonNullList.of(Ingredient.EMPTY, Ingredient.of(IWSItemRegistry.SKATEBOARD_TRUCK.get()), Ingredient.of(IWSItemRegistry.SKATEBOARD_DECK.get()), Ingredient.of(IWSItemRegistry.SKATEBOARD_TRUCK.get()), Ingredient.of(IWSTags.SKATEBOARD_WHEELS), Ingredient.EMPTY, Ingredient.of(IWSTags.SKATEBOARD_WHEELS)), new ItemStack(IWSItemRegistry.SKATEBOARD.get()));
+        super("", category, new ShapedRecipePattern(3, 2, NonNullList.of(Ingredient.EMPTY, Ingredient.of(IWSItemRegistry.SKATEBOARD_TRUCK.get()), Ingredient.of(IWSItemRegistry.SKATEBOARD_DECK.get()), Ingredient.of(IWSItemRegistry.SKATEBOARD_TRUCK.get()), Ingredient.of(IWSTags.SKATEBOARD_WHEELS), Ingredient.EMPTY, Ingredient.of(IWSTags.SKATEBOARD_WHEELS)), Optional.empty()), new ItemStack(IWSItemRegistry.SKATEBOARD.get()));
     }
 
-    public boolean matches(CraftingContainer container, Level level) {
-        if (super.matches(container, level)) {
-            ItemStack wheels1 = ItemStack.EMPTY;
-            ItemStack wheels2 = ItemStack.EMPTY;
-            for (int i = 0; i <= container.getContainerSize(); ++i) {
-                if (!container.getItem(i).isEmpty() && container.getItem(i).is(IWSTags.SKATEBOARD_WHEELS)) {
+    public RecipeSkateboard(CraftingBookCategory category) {
+        this(ResourceLocation.fromNamespaceAndPath("iwannaskate", "skateboard"), category);
+    }
+
+    public boolean matches(CraftingInput container, Level level) {
+        ItemStack wheels1 = ItemStack.EMPTY;
+        ItemStack wheels2 = ItemStack.EMPTY;
+        int decks = 0;
+        int trucks = 0;
+        int wheels = 0;
+        for (int i = 0; i < container.size(); ++i) {
+            ItemStack stack = container.getItem(i);
+            if (!stack.isEmpty()) {
+                if (stack.is(IWSItemRegistry.SKATEBOARD_DECK.get())) {
+                    decks++;
+                } else if (stack.is(IWSItemRegistry.SKATEBOARD_TRUCK.get())) {
+                    trucks++;
+                } else if (stack.is(IWSTags.SKATEBOARD_WHEELS)) {
                     if (wheels1.isEmpty()) {
-                        wheels1 = container.getItem(i);
+                        wheels1 = stack;
                     } else if (wheels2.isEmpty()) {
-                        wheels2 = container.getItem(i);
+                        wheels2 = stack;
                     }
+                    wheels++;
+                } else {
+                    return false;
                 }
             }
-            return ItemStack.isSameItem(wheels1, wheels2);
         }
-        return false;
+        return decks == 1 && trucks == 2 && wheels == 2 && ItemStack.isSameItem(wheels1, wheels2);
     }
 
-    public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput container, HolderLookup.Provider registryAccess) {
         ItemStack deck = ItemStack.EMPTY;
         ItemStack wheels = ItemStack.EMPTY;
-        for (int i = 0; i < container.getContainerSize(); i++) {
+        for (int i = 0; i < container.size(); i++) {
             if (container.getItem(i).is(IWSItemRegistry.SKATEBOARD_DECK.get())) {
                 deck = container.getItem(i);
             }
@@ -52,12 +68,11 @@ public class RecipeSkateboard extends ShapedRecipe implements SpecialRecipeInGui
             }
         }
         ItemStack board = new ItemStack(IWSItemRegistry.SKATEBOARD.get());
-        CompoundTag skateDataTag = deck.hasTag() && deck.getTag().contains("Skateboard") ? deck.getTag().getCompound("Skateboard") : new CompoundTag();
+        CompoundTag customTag = SkateboardData.getCustomTag(deck);
+        CompoundTag skateDataTag = customTag.contains("Skateboard") ? customTag.getCompound("Skateboard") : new CompoundTag();
         SkateboardData data = SkateboardData.fromTag(skateDataTag);
         data.setWheelType(SkateboardWheels.fromItem(wheels.getItem()));
-        CompoundTag deckTag = new CompoundTag();
-        deckTag.put("Skateboard", data.toTag());
-        board.setTag(deckTag);
+        SkateboardData.setStackData(board, data);
         return board;
     }
 
@@ -91,15 +106,13 @@ public class RecipeSkateboard extends ShapedRecipe implements SpecialRecipeInGui
             }
         }
         ItemStack board = new ItemStack(IWSItemRegistry.SKATEBOARD.get());
-        CompoundTag skateDataTag = deck.hasTag() && deck.getTag().contains("Skateboard") ? deck.getTag().getCompound("Skateboard") : new CompoundTag();
+        CompoundTag customTag = SkateboardData.getCustomTag(deck);
+        CompoundTag skateDataTag = customTag.contains("Skateboard") ? customTag.getCompound("Skateboard") : new CompoundTag();
         SkateboardData data = SkateboardData.fromTag(skateDataTag);
         data.setWheelType(SkateboardWheels.fromItem(wheels.getItem()));
         data.removeBanner();
         data.removeGripTape();
-        CompoundTag deckTag = new CompoundTag();
-        deckTag.put("Skateboard", data.toTag());
-        board.setTag(deckTag);
+        SkateboardData.setStackData(board, data);
         return board;
     }
 }
-

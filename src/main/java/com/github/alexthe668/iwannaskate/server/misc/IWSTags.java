@@ -28,18 +28,18 @@ public class IWSTags {
     public static final TagKey<Biome> NO_MONSTERS = registerBiome("no_monsters");
 
     private static TagKey<Item> registerItemTag(String name) {
-        return TagKey.create(Registries.ITEM, new ResourceLocation(IWannaSkateMod.MODID, name));
+        return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, name));
     }
 
     private static TagKey<Block> registerBlockTag(String name) {
-        return TagKey.create(Registries.BLOCK, new ResourceLocation(IWannaSkateMod.MODID, name));
+        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, name));
     }
 
     private static TagKey<EntityType<?>> registerEntityType(String name) {
-        return TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation(IWannaSkateMod.MODID, name));
+        return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, name));
     }
 
     private static TagKey<Biome> registerBiome(String name) {
-        return TagKey.create(Registries.BIOME, new ResourceLocation(IWannaSkateMod.MODID, name));
+        return TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, name));
     }
 }

@@ -5,7 +5,7 @@ import net.minecraft.client.model.SkeletonModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 public class IWSModelLayers {
 
@@ -25,7 +25,7 @@ public class IWSModelLayers {
     }
 
     private static ModelLayerLocation createLocation(String model, String layer) {
-        return new ModelLayerLocation(new ResourceLocation(IWannaSkateMod.MODID, model), layer);
+        return new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, model), layer);
     }
 
 

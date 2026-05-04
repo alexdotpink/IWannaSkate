@@ -19,11 +19,11 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 public class HoverParticle extends Particle {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/particle/hover.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/particle/hover.png");
     private static final RenderType HOVER_RENDER_TYPE = IWSRenderTypes.getHover(TEXTURE);
     private static final HoverParticleModel MODEL = new HoverParticleModel();
     private float size;
@@ -96,7 +96,8 @@ public class HoverParticle extends Particle {
         posestack.mulPose(Axis.XP.rotationDegrees((float) pitchLerp));
         posestack.scale(sizeLerp, sizeLerp, sizeLerp);
         int j = 240;
-        MODEL.renderToBuffer(posestack, vertexConsumer1, j, OverlayTexture.NO_OVERLAY, r, g, b, alphaLerp);
+        int color = ((int)(alphaLerp * 255.0F) << 24) | ((int)(r * 255.0F) << 16) | ((int)(g * 255.0F) << 8) | (int)(b * 255.0F);
+        MODEL.renderToBuffer(posestack, vertexConsumer1, j, OverlayTexture.NO_OVERLAY, color);
         multibuffersource$buffersource.endBatch();
     }
 

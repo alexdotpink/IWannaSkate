@@ -7,8 +7,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.*;
 
@@ -20,15 +20,15 @@ public class BoardColorSampler {
     public static Map<ResourceLocation, int[]> TEXTURES_TO_COLOR = new HashMap<>();
 
     public static void sampleColorsOnLoad(){
-        ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.builtInRegistryHolder().is(IWSTags.SAMPLE_COLORS_ON_LOAD)).forEach(BoardColorSampler::getColor);
+        BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().is(IWSTags.SAMPLE_COLORS_ON_LOAD)).forEach(BoardColorSampler::getColor);
     }
 
     public static int[] getColor(ResourceLocation item) {
-        return getColor(ForgeRegistries.ITEMS.getValue(item));
+        return getColor(BuiltInRegistries.ITEM.get(item));
     }
 
     public static int[] getColor(Item item) {
-        ResourceLocation name = ForgeRegistries.ITEMS.getKey(item);
+        ResourceLocation name = BuiltInRegistries.ITEM.getKey(item);
         if(name == null){
             return DEFAULT_COLORS;
         }

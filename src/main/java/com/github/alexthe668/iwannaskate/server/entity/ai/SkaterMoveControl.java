@@ -91,8 +91,6 @@ public class SkaterMoveControl extends MoveControl {
             if(jumpCooldown > 0){
                 jumpCooldown--;
             }
-        }else{
-            mob.moveControl = actual;
         }
     }
 

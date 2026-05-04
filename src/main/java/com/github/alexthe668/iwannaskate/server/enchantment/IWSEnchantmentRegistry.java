@@ -1,39 +1,49 @@
 package com.github.alexthe668.iwannaskate.server.enchantment;
 
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
-import com.github.alexthe668.iwannaskate.server.item.SkateboardItem;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentCategory;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+
+import java.util.List;
 
 public class IWSEnchantmentRegistry {
+    public static final SkateEnchantment SIDEWINDER = create("sidewinder", 2);
+    public static final SkateEnchantment CLAMBERING = create("clambering", 1);
+    public static final SkateEnchantment INERTIAL = create("inertial", 3);
+    public static final SkateEnchantment PEDALLING = create("pedalling", 2);
+    public static final SkateEnchantment AERIAL = create("aerial", 4);
+    public static final SkateEnchantment SECURED = create("secured", 1);
+    public static final SkateEnchantment EARTHCROSSER = create("earthcrosser", 1);
+    public static final SkateEnchantment SURFING = create("surfing", 1);
+    public static final SkateEnchantment HARDWOOD = create("hardwood", 1);
+    public static final SkateEnchantment BASHING = create("bashing", 4);
+    public static final SkateEnchantment ONBOARDING = create("onboarding", 1);
+    public static final SkateEnchantment BENTHIC = create("benthic", 1);
+    public static final SkateEnchantment INSTANT_RETURN = create("instant_return", 1);
 
-    public static final DeferredRegister<Enchantment> DEF_REG = DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, IWannaSkateMod.MODID);
-    public static final EnchantmentCategory SKATEBOARD = EnchantmentCategory.create("skateboard", (item -> item instanceof SkateboardItem));
+    public static final List<SkateEnchantment> ALL = List.of(
+            SIDEWINDER, CLAMBERING, INERTIAL, PEDALLING, AERIAL, SECURED, EARTHCROSSER,
+            SURFING, HARDWOOD, BASHING, ONBOARDING, BENTHIC, INSTANT_RETURN);
 
-    public static final RegistryObject<Enchantment> SIDEWINDER = DEF_REG.register("sidewinder", () -> new SkateboardEnchantment("sidewinder", Enchantment.Rarity.COMMON, 2, 6));
-    public static final RegistryObject<Enchantment> CLAMBERING = DEF_REG.register("clambering", () -> new SkateboardEnchantment("clambering", Enchantment.Rarity.UNCOMMON, 1, 11));
-    public static final RegistryObject<Enchantment> INERTIAL = DEF_REG.register("inertial", () -> new SkateboardEnchantment("inertial", Enchantment.Rarity.COMMON, 3, 8));
-    public static final RegistryObject<Enchantment> PEDALLING = DEF_REG.register("pedalling", () -> new SkateboardEnchantment("pedalling", Enchantment.Rarity.COMMON, 2, 6));
-    public static final RegistryObject<Enchantment> AERIAL = DEF_REG.register("aerial", () -> new SkateboardEnchantment("aerial", Enchantment.Rarity.UNCOMMON, 4, 8));
-    public static final RegistryObject<Enchantment> SECURED = DEF_REG.register("secured", () -> new SkateboardEnchantment("secured", Enchantment.Rarity.UNCOMMON, 1, 12));
-    public static final RegistryObject<Enchantment> EARTHCROSSER = DEF_REG.register("earthcrosser", () -> new SkateboardEnchantment("earthcrosser", Enchantment.Rarity.RARE, 1, 11));
-    public static final RegistryObject<Enchantment> SURFING = DEF_REG.register("surfing", () -> new SkateboardEnchantment("surfing", Enchantment.Rarity.RARE, 1, 16));
-    public static final RegistryObject<Enchantment> HARDWOOD = DEF_REG.register("hardwood", () -> new SkateboardEnchantment("hardwood", Enchantment.Rarity.UNCOMMON, 1, 12));
-    public static final RegistryObject<Enchantment> BASHING = DEF_REG.register("bashing", () -> new SkateboardEnchantment("bashing", Enchantment.Rarity.UNCOMMON, 4, 8));
-    public static final RegistryObject<Enchantment> ONBOARDING = DEF_REG.register("onboarding", () -> new SkateboardEnchantment("onboarding", Enchantment.Rarity.UNCOMMON, 1, 14));
-    public static final RegistryObject<Enchantment> BENTHIC = DEF_REG.register("benthic", () -> new SkateboardEnchantment("benthic", Enchantment.Rarity.RARE, 1, 16));
-    public static final RegistryObject<Enchantment> INSTANT_RETURN = DEF_REG.register("instant_return", () -> new SkateboardEnchantment("instant_return", Enchantment.Rarity.COMMON, 1, 10));
+    private static SkateEnchantment create(String name, int maxLevel) {
+        return new SkateEnchantment(ResourceKey.create(Registries.ENCHANTMENT, ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, name)), maxLevel);
+    }
 
-    public static boolean areCompatible(Enchantment enchantment1, Enchantment enchantment2) {
-        if(enchantment1 == SURFING.get()){
-            return enchantment2 != BENTHIC.get();
+    public static Holder<Enchantment> holder(RegistryAccess registryAccess, SkateEnchantment enchantment) {
+        return registryAccess.registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(enchantment.key());
+    }
+
+    public static boolean isSkateboard(Holder<Enchantment> enchantment) {
+        return enchantment.unwrapKey().map(key -> ALL.stream().anyMatch(skateEnchantment -> skateEnchantment.key().equals(key))).orElse(false);
+    }
+
+    public record SkateEnchantment(ResourceKey<Enchantment> key, int maxLevel) {
+        public ResourceKey<Enchantment> get() {
+            return key;
         }
-        if(enchantment1 == BENTHIC.get()){
-            return enchantment2 != SURFING.get();
-        }
-        return true;
     }
 }

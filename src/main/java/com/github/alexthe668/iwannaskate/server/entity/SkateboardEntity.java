@@ -16,12 +16,11 @@ import com.github.alexthe668.iwannaskate.server.network.SkateboardKeyMessage;
 import com.github.alexthe668.iwannaskate.server.potion.IWSEffectRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -38,22 +37,22 @@ import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.entity.PartEntity;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.entity.PartEntity;
+import net.neoforged.neoforge.fluids.FluidType;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SkateboardEntity extends Entity implements PlayerRideableJumping, IModifiesTime {
 
@@ -78,7 +77,7 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
     public boolean trickFlag = false;
     public int trailPosPointer = -1;
     private SkateboardData skateboardData = SkateboardData.DEFAULT;
-    private Map<Enchantment, Integer> enchantments;
+    private Map<ResourceKey<Enchantment>, Integer> enchantments;
     private float prevZRot;
     private float prevWheelRot;
     private float onGroundProgress;
@@ -124,30 +123,27 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
         size = this.getType().getDimensions();
     }
 
-    public SkateboardEntity(PlayMessages.SpawnEntity spawnEntity, Level world) {
-        this(IWSEntityRegistry.SKATEBOARD.get(), world);
-    }
-
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(ITEMSTACK, ItemStack.EMPTY);
-        this.entityData.define(X_ROT, 0.0F);
-        this.entityData.define(Y_ROT, 0.0F);
-        this.entityData.define(Z_ROT, 0.0F);
-        this.entityData.define(WHEEL_ROT, 0.0F);
-        this.entityData.define(FORWARDS, 0.0F);
-        this.entityData.define(PEDAL_AMOUNT, 0.0F);
-        this.entityData.define(REMOVE_SOON, false);
-        this.entityData.define(STOP_MOVEMENT_FLAG, false);
-        this.entityData.define(SKATER_POSE, 0);
-        this.entityData.define(GRINDING, false);
-        this.entityData.define(IS_MOB_SPAWNED, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(ITEMSTACK, ItemStack.EMPTY);
+        builder.define(X_ROT, 0.0F);
+        builder.define(Y_ROT, 0.0F);
+        builder.define(Z_ROT, 0.0F);
+        builder.define(WHEEL_ROT, 0.0F);
+        builder.define(FORWARDS, 0.0F);
+        builder.define(PEDAL_AMOUNT, 0.0F);
+        builder.define(REMOVE_SOON, false);
+        builder.define(STOP_MOVEMENT_FLAG, false);
+        builder.define(SKATER_POSE, 0);
+        builder.define(GRINDING, false);
+        builder.define(IS_MOB_SPAWNED, false);
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         if (tag.contains("BoardStack")) {
-            this.setItemStack(ItemStack.of(tag.getCompound("BoardStack")));
+            HolderLookup.Provider registries = this.registryAccess();
+            this.setItemStack(ItemStack.parseOptional(registries, tag.getCompound("BoardStack")));
         }
         totalDistanceTraveled = tag.getFloat("TotalDistanceTraveled");
         lastDamagedDistance = tag.getFloat("LastDamagedDist");
@@ -159,18 +155,11 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         if (!this.getItemStack().isEmpty()) {
-            CompoundTag stackTag = new CompoundTag();
-            this.getItemStack().save(stackTag);
-            tag.put("BoardStack", stackTag);
+            tag.put("BoardStack", this.getItemStack().save(this.registryAccess(), new CompoundTag()));
         }
         tag.putFloat("TotalDistanceTraveled", (float) totalDistanceTraveled);
         tag.putFloat("LastDamagedDist", (float) lastDamagedDistance);
         tag.putBoolean("SpawnedByMob", this.isMobSpawned());
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return (Packet<ClientGamePacketListener>) NetworkHooks.getEntitySpawningPacket(this);
     }
 
     public ItemStack getItemStack() {
@@ -187,7 +176,9 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
         super.onSyncedDataUpdated(entityDataAccessor);
         if (ITEMSTACK.equals(entityDataAccessor)) {
             this.skateboardData = SkateboardData.fromStack(getItemStack());
-            this.enchantments = EnchantmentHelper.getEnchantments(getItemStack());
+            this.enchantments = EnchantmentHelper.getEnchantmentsForCrafting(getItemStack()).entrySet().stream()
+                    .filter(entry -> entry.getKey().unwrapKey().isPresent())
+                    .collect(Collectors.toMap(entry -> entry.getKey().unwrapKey().get(), entry -> entry.getIntValue()));
             refreshDimensions();
             front.refreshDimensions();
             back.refreshDimensions();
@@ -551,7 +542,7 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
         if (Math.abs(heightDiff) > 0) {
             this.setForwards(Mth.clamp(this.getForwards() - heightDiff * 0.8F, 0, getMaxForwardsTicks()));
         }
-        this.setGrinding(this.onGround() && (this.getBlockStateOn().is(IWSTags.GRINDS) || this.getFeetBlockState().is(IWSTags.GRINDS)));
+        this.setGrinding(this.onGround() && this.getBlockStateOn().is(IWSTags.GRINDS));
         boolean onWater = this.hasEnchant(IWSEnchantmentRegistry.SURFING.get()) && this.isOnWater();
         if (onWater) {
             this.setOnGround(true);
@@ -772,7 +763,7 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
     }
 
     @Override
-    public net.minecraftforge.entity.PartEntity<?>[] getParts() {
+    public net.neoforged.neoforge.entity.PartEntity<?>[] getParts() {
         return allParts;
     }
 
@@ -805,7 +796,6 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
         return entity;
     }
 
-    @Override
     public double getPassengersRidingOffset() {
         double d = 0.315D + getRenderOffGroundAmount(1.0F);
         if (this.getSkaterPose() == SkaterPose.KICKFLIP) {
@@ -888,7 +878,7 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
                     if (itemstack.isDamageableItem()) {
                         itemstack.setDamageValue(itemstack.getDamageValue() + 3 + this.random.nextInt(2));
                         if (itemstack.getDamageValue() >= itemstack.getMaxDamage()) {
-                            passenger.broadcastBreakEvent(EquipmentSlot.HEAD);
+                            passenger.onEquippedItemBroken(itemstack.getItem(), EquipmentSlot.HEAD);
                             passenger.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
                         }
                         damageBlocked = true;
@@ -924,9 +914,6 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
     }
 
     public void tickMobRider(Mob passenger) {
-        if (!(passenger.getMoveControl() instanceof SkaterMoveControl) && passenger.getMoveControl() != null) {
-            passenger.moveControl = new SkaterMoveControl(passenger, passenger.getMoveControl());
-        }
         passenger.yBodyRot = this.getYRot();
         passenger.yHeadRot = Mth.clamp(passenger.yHeadRot, passenger.yBodyRot - 90, passenger.yBodyRot + 90);
     }
@@ -943,9 +930,6 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
                 living.walkAnimation.setSpeed(0.0F);
             }
             double d0 = this.getY() + this.getPassengersRidingOffset();
-            if (living.getType().is(IWSTags.OVERRIDES_SKATEBOARD_POSITIONING)) {
-                d0 += living.getMyRidingOffset();
-            }
             moveFunction.accept(passenger, this.getX(), d0, this.getZ());
         } else {
             super.positionRider(passenger, moveFunction);
@@ -1036,7 +1020,7 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
 
 
     @Override
-    public void lerpTo(double x, double y, double z, float yr, float xr, int steps, boolean b) {
+    public void lerpTo(double x, double y, double z, float yr, float xr, int steps) {
         this.lx = x;
         this.ly = y;
         this.lz = z;
@@ -1103,7 +1087,6 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
         return this.getOnGroundProgress(1.0F) >= 0.1F && this.getSkaterPose().allowJumping() && this.getSkaterPoseProgress(1.0F) >= 0.5F;
     }
 
-    @Override
     public float getStepHeight() {
         return this.hasEnchant(IWSEnchantmentRegistry.CLAMBERING.get()) ? 1.0F : 0.51F;
     }
@@ -1145,8 +1128,8 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
 
     private int getSlowMotionLevel() {
         if (this.getFirstPassenger() instanceof Player player) {
-            if (player.hasEffect(IWSEffectRegistry.HIGH_OCTANE.get())) {
-                MobEffectInstance instance = player.getEffect(IWSEffectRegistry.HIGH_OCTANE.get());
+            if (player.hasEffect(IWSEffectRegistry.HIGH_OCTANE)) {
+                MobEffectInstance instance = player.getEffect(IWSEffectRegistry.HIGH_OCTANE);
                 return instance == null ? 1 : instance.getAmplifier() + 1;
             }
         }
@@ -1175,18 +1158,18 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
 
     @Override
     public boolean canBeRiddenUnderFluidType(FluidType type, Entity rider) {
-        return (this.hasEnchant(IWSEnchantmentRegistry.SURFING.get()) || this.hasEnchant(IWSEnchantmentRegistry.BENTHIC.get())) && type == ForgeMod.WATER_TYPE.get();
+        return (this.hasEnchant(IWSEnchantmentRegistry.SURFING.get()) || this.hasEnchant(IWSEnchantmentRegistry.BENTHIC.get())) && type == NeoForgeMod.WATER_TYPE.value();
     }
 
     public boolean hasGlint() {
         return this.getItemStack().hasFoil();
     }
 
-    public boolean hasEnchant(Enchantment enchantment) {
+    public boolean hasEnchant(ResourceKey<Enchantment> enchantment) {
         return getEnchantLevel(enchantment) > 0;
     }
 
-    public int getEnchantLevel(Enchantment enchantment) {
+    public int getEnchantLevel(ResourceKey<Enchantment> enchantment) {
         return this.enchantments == null || !this.enchantments.containsKey(enchantment) ? 0 : this.enchantments.get(enchantment);
     }
 
@@ -1226,8 +1209,8 @@ public class SkateboardEntity extends Entity implements PlayerRideableJumping, I
     }
 
     public EntityDimensions getDimensions(Pose pose) {
-        if (size.height != getBoardHeight()) {
-            size = EntityDimensions.scalable(size.width, getBoardHeight());
+        if (size.height() != getBoardHeight()) {
+            size = EntityDimensions.scalable(size.width(), getBoardHeight());
         }
         return size;
     }
