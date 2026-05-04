@@ -33,11 +33,11 @@ public class LivingEntityRendererMixin {
     }
 
     @Inject(
-            method = {"Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;setupRotations(Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;FFF)V"},
+            method = {"Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;setupRotations(Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;FFFF)V"},
             remap = true,
             at = @At(value = "RETURN")
     )
-    protected void iws_setupRotations(LivingEntity livingEntity, PoseStack poseStack, float ageInTicks, float bodyYRot, float partialTick, CallbackInfo ci) {
+    protected void iws_setupRotations(LivingEntity livingEntity, PoseStack poseStack, float ageInTicks, float bodyYRot, float partialTick, float scale, CallbackInfo ci) {
         if(livingEntity.getVehicle() instanceof SkateboardEntity skateboard){
             SkatingModelPositioner.setupSkaterRotations(livingEntity, model, skateboard, poseStack, bodyYRot, partialTick);
         }
