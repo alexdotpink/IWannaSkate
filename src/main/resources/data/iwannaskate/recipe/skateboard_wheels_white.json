@@ -5,10 +5,10 @@
       "tag": "iwannaskate:skateboard_wheels"
     },
     {
-      "tag": "c:dyes/brown"
+      "tag": "c:dyes/white"
     }
   ],
   "result": {
-    "item": "iwannaskate:skateboard_wheels_brown"
+    "id": "iwannaskate:skateboard_wheels_white"
   }
 }

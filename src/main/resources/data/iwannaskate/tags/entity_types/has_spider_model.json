@@ -1,8 +1,0 @@
-{
-  "#comment": "All entities that have the spider model or a variant of, for animation purposes.",
-  "replace": false,
-  "values": [
-    "minecraft:spider",
-    "minecraft:cave_spider"
-  ]
-}

@@ -1,7 +1,0 @@
-{
-  "#comment": "All blocks/items that skateboard decks can be crafted from",
-  "replace": false,
-  "values": [
-    "#minecraft:wooden_slabs"
-  ]
-}
