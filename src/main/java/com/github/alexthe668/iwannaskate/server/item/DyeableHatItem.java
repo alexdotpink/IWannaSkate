@@ -1,31 +1,30 @@
 package com.github.alexthe668.iwannaskate.server.item;
 
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.DyeableArmorItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
 import javax.annotation.Nullable;
 
-public class DyeableHatItem extends DyeableArmorItem {
+public class DyeableHatItem extends ArmorItem {
 
     private String type;
     private int defaultColor;
 
-    public DyeableHatItem(ArmorMaterial material, String type, int defaultColor, Properties props) {
+    public DyeableHatItem(Holder<ArmorMaterial> material, String type, int defaultColor, Properties props) {
         super(material, Type.HELMET, props);
         this.type = type;
         this.defaultColor = defaultColor;
     }
 
-    @Override
     public int getColor(ItemStack itemStack) {
-        CompoundTag compoundtag = itemStack.getTagElement("display");
-        return compoundtag != null && compoundtag.contains("color", 99) ? compoundtag.getInt("color") : defaultColor;
+        return DyedItemColor.getOrDefault(itemStack, defaultColor);
     }
 
     @Override

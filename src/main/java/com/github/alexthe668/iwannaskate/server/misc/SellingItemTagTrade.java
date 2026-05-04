@@ -9,7 +9,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.List;
 
@@ -29,13 +30,13 @@ public class SellingItemTagTrade implements VillagerTrades.ItemListing {
     }
 
     public MerchantOffer getOffer(Entity tradingWith, RandomSource randomSource) {
-        List<Item> items = ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.builtInRegistryHolder().is(tradeItem)).collect(ImmutableList.toImmutableList());
+        List<Item> items = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().is(tradeItem)).collect(ImmutableList.toImmutableList());
         Item item;
         if(items.size() > 1){
             item = items.get(randomSource.nextInt(items.size() - 1));
         }else{
             item = items.get(0);
         }
-        return new MerchantOffer(new ItemStack(item), new ItemStack(Items.EMERALD, this.price), this.maxUses, this.xpValue, this.priceMultiplier);
+        return new MerchantOffer(new ItemCost(item), new ItemStack(Items.EMERALD, this.price), this.maxUses, this.xpValue, this.priceMultiplier);
     }
 }

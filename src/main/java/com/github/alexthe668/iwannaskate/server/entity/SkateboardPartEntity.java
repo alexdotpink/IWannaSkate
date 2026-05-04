@@ -4,6 +4,7 @@ import com.github.alexthe668.iwannaskate.IWannaSkateMod;
 import com.github.alexthe668.iwannaskate.server.network.SkateboardPartMessage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,7 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.entity.PartEntity;
+import net.neoforged.neoforge.entity.PartEntity;
 
 import java.util.Optional;
 
@@ -32,8 +33,8 @@ public class SkateboardPartEntity extends PartEntity<SkateboardEntity> {
 
     public EntityDimensions getDimensions(Pose pose) {
         SkateboardEntity parent = this.getParent();
-        if (parent != null && size.height != parent.getBoardHeight()) {
-            size = EntityDimensions.scalable(size.width, parent.getBoardHeight());
+        if (parent != null && size.height() != parent.getBoardHeight()) {
+            size = EntityDimensions.scalable(size.width(), parent.getBoardHeight());
         }
         return size;
     }
@@ -93,7 +94,7 @@ public class SkateboardPartEntity extends PartEntity<SkateboardEntity> {
     }
 
     @Override
-    protected void defineSynchedData() {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
 
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -41,21 +42,19 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class WanderingSkaterEntity extends WanderingTrader {
 
@@ -121,7 +120,7 @@ public class WanderingSkaterEntity extends WanderingTrader {
 
     public static ItemStack createSkateboard() {
         ItemStack itemStack = new ItemStack(IWSItemRegistry.SKATEBOARD.get());
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(Items.OAK_SLAB));
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(Items.OAK_SLAB));
         data.setGripTape(DyeColor.GRAY);
         CompoundTag bannerTag = new CompoundTag();
         ListTag patterns = new ListTag();
@@ -141,7 +140,7 @@ public class WanderingSkaterEntity extends WanderingTrader {
         bannerTag.putInt("Base", DyeColor.LIME.getId());
         data.setBanner(bannerTag);
         SkateboardData.setStackData(itemStack, data);
-        itemStack.setHoverName(Component.translatable("item.iwannaskate.skateboard.wandering_skater").withStyle(ChatFormatting.DARK_AQUA));
+        itemStack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.iwannaskate.skateboard.wandering_skater").withStyle(ChatFormatting.DARK_AQUA));
         return itemStack;
     }
 
@@ -172,12 +171,12 @@ public class WanderingSkaterEntity extends WanderingTrader {
         return IWSSoundRegistry.WANDERING_SKATER_YES.get();
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SKATEBOARD_UUID, Optional.empty());
-        this.entityData.define(SKATEBOARD_ID, -1);
-        this.entityData.define(ATTACK_TIME, 0);
-        this.entityData.define(NO_DESPAWN, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SKATEBOARD_UUID, Optional.empty());
+        builder.define(SKATEBOARD_ID, -1);
+        builder.define(ATTACK_TIME, 0);
+        builder.define(NO_DESPAWN, false);
     }
 
     public void readAdditionalSaveData(CompoundTag compound) {
@@ -186,7 +185,7 @@ public class WanderingSkaterEntity extends WanderingTrader {
             this.setSkateboardUUID(compound.getUUID("SkateboardUUID"));
         }
         if (compound.contains("WanderTarget")) {
-            this.wanderingSkaterTarget = NbtUtils.readBlockPos(compound.getCompound("WanderTarget"));
+            this.wanderingSkaterTarget = NbtUtils.readBlockPos(compound, "WanderTarget").orElse(null);
         }
         this.setNoDespawn(compound.getBoolean("NoTraderDespawn"));
         this.lastTradesGenTime = compound.getLong("LastTradeGenTime");
@@ -418,10 +417,10 @@ public class WanderingSkaterEntity extends WanderingTrader {
 
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType mobType, @Nullable SpawnGroupData spawnGroupData, @Nullable CompoundTag tag) {
-        spawnGroupData = super.finalizeSpawn(level, difficulty, mobType, spawnGroupData, tag);
+        spawnGroupData = super.finalizeSpawn(level, difficulty, mobType, spawnGroupData);
         RandomSource randomsource = level.getRandom();
         this.populateDefaultEquipmentSlots(randomsource, difficulty);
-        this.populateDefaultEquipmentEnchantments(randomsource, difficulty);
+        this.populateDefaultEquipmentEnchantments(level, randomsource, difficulty);
         return spawnGroupData;
     }
 
@@ -463,8 +462,8 @@ public class WanderingSkaterEntity extends WanderingTrader {
     protected void updateTrades() {
         this.lastTradesGenTime = level().getGameTime();
         MerchantOffers merchantoffers = this.getOffers();
-        List<Enchantment> enchantments = ForgeRegistries.ENCHANTMENTS.getValues().stream().filter(enchantment -> enchantment.category == IWSEnchantmentRegistry.SKATEBOARD).collect(Collectors.toList());
-        Enchantment randomEnchant = enchantments.size() > 1 ? enchantments.get(random.nextInt(enchantments.size() - 1)) : enchantments.get(0);
+        var enchantments = IWSEnchantmentRegistry.ALL.stream().map(enchantment -> IWSEnchantmentRegistry.holder(registryAccess(), enchantment)).toList();
+        var randomEnchant = enchantments.size() > 1 ? enchantments.get(random.nextInt(enchantments.size() - 1)) : enchantments.get(0);
         VillagerTrades.ItemListing[] trades = new VillagerTrades.ItemListing[]{
                 new SellingItemTrade(new ItemStack(IWSItemRegistry.SKATING_MANUAL.get(), 1), 2, 2, 4),
                 new BuyingItemTrade(new ItemStack(SkateboardWheels.DEFAULT.getItemRegistryObject().get(), 2), 1, 7, 3),

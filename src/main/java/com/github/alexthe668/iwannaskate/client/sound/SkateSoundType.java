@@ -4,16 +4,16 @@ import com.github.alexthe668.iwannaskate.server.entity.SkateboardEntity;
 import com.github.alexthe668.iwannaskate.server.misc.IWSSoundRegistry;
 import com.github.alexthe668.iwannaskate.server.misc.SkateQuality;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraftforge.registries.RegistryObject;
+import java.util.function.Supplier;
 
 public enum SkateSoundType {
     SMOOTH(IWSSoundRegistry.SKATEBOARD_SMOOTH_ROLLING_LOOP),
     ROUGH(IWSSoundRegistry.SKATEBOARD_ROUGH_ROLLING_LOOP),
     GRIND(IWSSoundRegistry.SKATEBOARD_GRIND_LOOP);
 
-    RegistryObject<SoundEvent> sound;
+    Supplier<SoundEvent> sound;
 
-    SkateSoundType(RegistryObject<SoundEvent> sound) {
+    SkateSoundType(Supplier<SoundEvent> sound) {
         this.sound = sound;
     }
 

@@ -4,11 +4,11 @@ import com.github.alexthe668.iwannaskate.client.ClientProxy;
 import com.github.alexthe668.iwannaskate.client.IWSClientConfig;
 import com.github.alexthe668.iwannaskate.client.model.IWSModelLayers;
 import com.github.alexthe668.iwannaskate.client.particle.IWSParticleRegistry;
+import com.github.alexthe668.iwannaskate.server.CommonEvents;
 import com.github.alexthe668.iwannaskate.server.CommonProxy;
 import com.github.alexthe668.iwannaskate.server.IWSServerConfig;
 import com.github.alexthe668.iwannaskate.server.block.IWSBlockRegistry;
 import com.github.alexthe668.iwannaskate.server.blockentity.IWSBlockEntityRegistry;
-import com.github.alexthe668.iwannaskate.server.enchantment.IWSEnchantmentRegistry;
 import com.github.alexthe668.iwannaskate.server.entity.IWSEntityRegistry;
 import com.github.alexthe668.iwannaskate.server.item.IWSItemRegistry;
 import com.github.alexthe668.iwannaskate.server.misc.IWSAdvancements;
@@ -21,24 +21,25 @@ import com.github.alexthe668.iwannaskate.server.network.SkateboardRackMessage;
 import com.github.alexthe668.iwannaskate.server.potion.IWSEffectRegistry;
 import com.github.alexthe668.iwannaskate.server.recipe.IWSRecipeRegistry;
 import com.mojang.logging.LogUtils;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
@@ -48,42 +49,29 @@ import static com.github.alexthe668.iwannaskate.server.misc.PlayerCapes.register
 public class IWannaSkateMod {
     public static final String MODID = "iwannaskate";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static CommonProxy PROXY = DistExecutor.runForDist(() -> ClientProxy::new, () -> CommonProxy::new);
-    private static int packetsRegistered = 0;
-    public static final SimpleChannel NETWORK_WRAPPER;
-    private static final String PROTOCOL_VERSION = Integer.toString(1);
+    public static CommonProxy PROXY = FMLEnvironment.dist.isClient() ? new ClientProxy() : new CommonProxy();
+    private static final String PROTOCOL_VERSION = "1";
     public static final IWSServerConfig COMMON_CONFIG;
-    private static final ForgeConfigSpec COMMON_CONFIG_SPEC;
+    private static final ModConfigSpec COMMON_CONFIG_SPEC;
     public static final IWSClientConfig CLIENT_CONFIG;
-    private static final ForgeConfigSpec CLIENT_CONFIG_SPEC;
+    private static final ModConfigSpec CLIENT_CONFIG_SPEC;
 
     static {
-        final Pair<IWSServerConfig, ForgeConfigSpec> serverPair = new ForgeConfigSpec.Builder().configure(IWSServerConfig::new);
+        final Pair<IWSServerConfig, ModConfigSpec> serverPair = new ModConfigSpec.Builder().configure(IWSServerConfig::new);
         COMMON_CONFIG = serverPair.getLeft();
         COMMON_CONFIG_SPEC = serverPair.getRight();
-        final Pair<IWSClientConfig, ForgeConfigSpec> clientPair = new ForgeConfigSpec.Builder().configure(IWSClientConfig::new);
+        final Pair<IWSClientConfig, ModConfigSpec> clientPair = new ModConfigSpec.Builder().configure(IWSClientConfig::new);
         CLIENT_CONFIG = clientPair.getLeft();
         CLIENT_CONFIG_SPEC = clientPair.getRight();
     }
-    static {
-        NetworkRegistry.ChannelBuilder channel = NetworkRegistry.ChannelBuilder.named(new ResourceLocation(MODID, "main_channel"));
-        String version = PROTOCOL_VERSION;
-        version.getClass();
-        channel = channel.clientAcceptedVersions(version::equals);
-        version = PROTOCOL_VERSION;
-        version.getClass();
-        NETWORK_WRAPPER = channel.serverAcceptedVersions(version::equals).networkProtocolVersion(() -> {
-            return PROTOCOL_VERSION;
-        }).simpleChannel();
-    }
 
-    public IWannaSkateMod() {
-        final ModLoadingContext modLoadingContext = ModLoadingContext.get();
-        modLoadingContext.registerConfig(ModConfig.Type.COMMON, COMMON_CONFIG_SPEC, "iwannaskate-common.toml");
-        modLoadingContext.registerConfig(ModConfig.Type.CLIENT, CLIENT_CONFIG_SPEC, "iwannaskate-client.toml");
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public IWannaSkateMod(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(ModConfig.Type.COMMON, COMMON_CONFIG_SPEC, "iwannaskate-common.toml");
+        modContainer.registerConfig(ModConfig.Type.CLIENT, CLIENT_CONFIG_SPEC, "iwannaskate-client.toml");
         modEventBus.addListener(this::clientSetup);
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::registerPayloads);
+        modEventBus.addListener(this::registerCapabilities);
         modEventBus.addListener(this::setupEntityModelLayers);
         modEventBus.addListener(this::onConfigReloaded);
         IWSItemRegistry.DEF_REG.register(modEventBus);
@@ -91,38 +79,50 @@ public class IWannaSkateMod {
         IWSCreativeTabRegistry.DEF_REG.register(modEventBus);
         IWSRecipeRegistry.DEF_REG.register(modEventBus);
         IWSEntityRegistry.DEF_REG.register(modEventBus);
-        IWSEnchantmentRegistry.DEF_REG.register(modEventBus);
         IWSSoundRegistry.DEF_REG.register(modEventBus);
         IWSParticleRegistry.DEF_REG.register(modEventBus);
         IWSEffectRegistry.DEF_REG.register(modEventBus);
         IWSBlockEntityRegistry.DEF_REG.register(modEventBus);
-        MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(PROXY);
-        PROXY.init();
+        IWSAdvancements.DEF_REG.register(modEventBus);
+        NeoForge.EVENT_BUS.register(new CommonEvents());
+        if (FMLEnvironment.dist.isClient()) {
+            NeoForge.EVENT_BUS.register(PROXY);
+        }
+        PROXY.init(modEventBus);
     }
-
 
     private void clientSetup(FMLClientSetupEvent event) {
         PROXY.clientInit();
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        NETWORK_WRAPPER.registerMessage(packetsRegistered++, SkateboardPartMessage.class, SkateboardPartMessage::write, SkateboardPartMessage::read, SkateboardPartMessage.Handler::handle);
-        NETWORK_WRAPPER.registerMessage(packetsRegistered++, SkateboardKeyMessage.class, SkateboardKeyMessage::write, SkateboardKeyMessage::read, SkateboardKeyMessage.Handler::handle);
-        NETWORK_WRAPPER.registerMessage(packetsRegistered++, SkateboardRackMessage.class, SkateboardRackMessage::write, SkateboardRackMessage::read, SkateboardRackMessage.Handler::handle);
-        NETWORK_WRAPPER.registerMessage(packetsRegistered++, SkateboardJumpMessage.class, SkateboardJumpMessage::write, SkateboardJumpMessage::read, SkateboardJumpMessage.Handler::handle);
-        IWSAdvancements.init();
         registerCapes();
     }
 
-    public static <MSG> void sendMSGToAll(MSG message) {
+    private void registerPayloads(final RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar(MODID).versioned(PROTOCOL_VERSION);
+        registrar.playBidirectional(SkateboardPartMessage.TYPE, SkateboardPartMessage.STREAM_CODEC, SkateboardPartMessage.Handler::handle);
+        registrar.playBidirectional(SkateboardKeyMessage.TYPE, SkateboardKeyMessage.STREAM_CODEC, SkateboardKeyMessage.Handler::handle);
+        registrar.playBidirectional(SkateboardRackMessage.TYPE, SkateboardRackMessage.STREAM_CODEC, SkateboardRackMessage.Handler::handle);
+        registrar.playBidirectional(SkateboardJumpMessage.TYPE, SkateboardJumpMessage.STREAM_CODEC, SkateboardJumpMessage.Handler::handle);
+    }
+
+    private void registerCapabilities(final RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(
+            Capabilities.ItemHandler.BLOCK,
+            IWSBlockEntityRegistry.SKATEBOARD_RACK.get(),
+            (blockEntity, side) -> blockEntity.getItemHandler()
+        );
+    }
+
+    public static <MSG extends CustomPacketPayload> void sendMSGToAll(MSG message) {
         for (ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) {
             sendNonLocal(message, player);
         }
     }
 
-    public static <MSG> void sendNonLocal(MSG msg, ServerPlayer player) {
-        NETWORK_WRAPPER.sendTo(msg, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    public static void sendNonLocal(CustomPacketPayload msg, ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, msg);
     }
 
     private void setupEntityModelLayers(final EntityRenderersEvent.RegisterLayerDefinitions event) {
@@ -133,7 +133,7 @@ public class IWannaSkateMod {
         PROXY.reloadConfig();
     }
 
-    public static <MSG> void sendMSGToServer(MSG message) {
-        NETWORK_WRAPPER.sendToServer(message);
+    public static void sendMSGToServer(CustomPacketPayload message) {
+        PacketDistributor.sendToServer(message);
     }
 }

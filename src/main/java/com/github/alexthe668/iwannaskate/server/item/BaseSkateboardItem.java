@@ -2,38 +2,22 @@ package com.github.alexthe668.iwannaskate.server.item;
 
 import com.github.alexthe666.citadel.item.ItemWithHoverAnimation;
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public class BaseSkateboardItem extends Item implements ItemWithHoverAnimation, CustomTabBehavior {
 
-    private final ImmutableMultimap<Attribute, AttributeModifier> weaponModifiers;
-
     public BaseSkateboardItem(Properties properties) {
         super(properties);
-        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-        builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", (double)2F, AttributeModifier.Operation.ADDITION));
-        builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", (double)-3.2F, AttributeModifier.Operation.ADDITION));
-        this.weaponModifiers = builder.build();
-    }
-
-    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
-        return slot == EquipmentSlot.MAINHAND ? this.weaponModifiers : super.getDefaultAttributeModifiers(slot);
     }
 
     public void fillItemCategory(CreativeModeTab.Output contents) {
@@ -42,7 +26,7 @@ public class BaseSkateboardItem extends Item implements ItemWithHoverAnimation, 
 
     public void addBoardToTab(CreativeModeTab.Output contents, Item board, Item material) {
         ItemStack stack = new ItemStack(board);
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(material));
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(material));
         SkateboardData.setStackData(stack, data);
         contents.accept(stack);
     }
@@ -52,8 +36,8 @@ public class BaseSkateboardItem extends Item implements ItemWithHoverAnimation, 
         consumer.accept((IClientItemExtensions) IWannaSkateMod.PROXY.getISTERProperties());
     }
 
-    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
-        super.appendHoverText(stack, worldIn, tooltip, flagIn);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+        super.appendHoverText(stack, context, tooltip, flagIn);
         SkateboardData.fromStack(stack).appendHoverText(tooltip, stack);
     }
 
@@ -66,7 +50,7 @@ public class BaseSkateboardItem extends Item implements ItemWithHoverAnimation, 
     }
 
     public boolean isFoil(ItemStack stack) {
-        return super.isFoil(stack) && (stack.getTag() == null || !stack.getTag().getBoolean("RemovedShimmer"));
+        return super.isFoil(stack) && !SkateboardData.getCustomTag(stack).getBoolean("RemovedShimmer");
     }
 
     @Override

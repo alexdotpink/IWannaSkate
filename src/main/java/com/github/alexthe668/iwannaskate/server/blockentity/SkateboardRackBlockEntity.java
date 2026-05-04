@@ -6,6 +6,7 @@ import com.github.alexthe668.iwannaskate.server.item.BaseSkateboardItem;
 import com.github.alexthe668.iwannaskate.server.network.SkateboardRackMessage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -25,17 +26,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nullable;
 
 public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer {
 
-    net.minecraftforge.common.util.LazyOptional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
-            net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN);
     private NonNullList<ItemStack> stacks = NonNullList.withSize(2, ItemStack.EMPTY);
+    private final IItemHandlerModifiable itemHandler = new RackItemHandler();
     private int tickCount;
     private int lastHoverTimestamp = -1;
     private boolean mouseOverTop = false;
@@ -72,7 +72,7 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
 
     @OnlyIn(Dist.CLIENT)
     public net.minecraft.world.phys.AABB getRenderBoundingBox() {
-        return new net.minecraft.world.phys.AABB(worldPosition.offset(-1, 0, -1), worldPosition.offset(2, 2, 2));
+        return new net.minecraft.world.phys.AABB(worldPosition.getX() - 1, worldPosition.getY(), worldPosition.getZ() - 1, worldPosition.getX() + 2, worldPosition.getY() + 2, worldPosition.getZ() + 2);
     }
 
     public float getHoverOver(boolean top, float partialTick) {
@@ -88,6 +88,10 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
     @Override
     public ItemStack getItem(int index) {
         return this.stacks.get(index);
+    }
+
+    public IItemHandlerModifiable getItemHandler() {
+        return itemHandler;
     }
 
     @Override
@@ -125,12 +129,12 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
 
     @Override
     public void setItem(int index, ItemStack stack) {
-        boolean flag = !stack.isEmpty() && ItemStack.isSameItem(stack, this.stacks.get(index)) && ItemStack.isSameItemSameTags(stack, this.stacks.get(index));
+        boolean flag = !stack.isEmpty() && ItemStack.isSameItem(stack, this.stacks.get(index)) && ItemStack.isSameItemSameComponents(stack, this.stacks.get(index));
         this.stacks.set(index, stack);
         if (!stack.isEmpty() && stack.getCount() > this.getMaxStackSize()) {
             stack.setCount(this.getMaxStackSize());
         }
-        this.saveAdditional(this.getUpdateTag());
+        this.setChanged();
         if (!level.isClientSide) {
             IWannaSkateMod.sendMSGToAll(new SkateboardRackMessage(this.getBlockPos().asLong(), index, stacks.get(index)));
         }
@@ -138,16 +142,16 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
 
 
     @Override
-    public void load(CompoundTag compound) {
-        super.load(compound);
+    protected void loadAdditional(CompoundTag compound, HolderLookup.Provider provider) {
+        super.loadAdditional(compound, provider);
         this.stacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(compound, this.stacks);
+        ContainerHelper.loadAllItems(compound, this.stacks, provider);
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
-        super.saveAdditional(compound);
-        ContainerHelper.saveAllItems(compound, this.stacks);
+    protected void saveAdditional(CompoundTag compound, HolderLookup.Provider provider) {
+        super.saveAdditional(compound, provider);
+        ContainerHelper.saveAllItems(compound, this.stacks, provider);
     }
 
     @Override
@@ -203,16 +207,15 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        if (packet != null && packet.getTag() != null) {
+        if (packet != null && packet.getTag() != null && this.level != null) {
             this.stacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-            ContainerHelper.loadAllItems(packet.getTag(), this.stacks);
+            ContainerHelper.loadAllItems(packet.getTag(), this.stacks, this.level.registryAccess());
         }
     }
 
-    public CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+    public CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+        return this.saveWithoutMetadata(provider);
     }
 
     @Override
@@ -242,6 +245,16 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
     }
 
     @Override
+    protected NonNullList<ItemStack> getItems() {
+        return this.stacks;
+    }
+
+    @Override
+    protected void setItems(NonNullList<ItemStack> stacks) {
+        this.stacks = stacks;
+    }
+
+    @Override
     public boolean isEmpty() {
         for (int i = 0; i < this.getContainerSize(); i++) {
             if (!this.getItem(i).isEmpty()) {
@@ -256,17 +269,6 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
             return this.getBlockState().getValue(SkateboardRackBlock.FACING);
         }
         return Direction.NORTH;
-    }
-
-    @Override
-    public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable Direction facing) {
-        if (!this.remove && facing != null && capability == ForgeCapabilities.ITEM_HANDLER) {
-            if (facing == Direction.DOWN)
-                return handlers[0].cast();
-            else
-                return handlers[1].cast();
-        }
-        return super.getCapability(capability, facing);
     }
 
     public void onHoverOver(Entity entity) {
@@ -284,5 +286,71 @@ public class SkateboardRackBlockEntity extends BaseContainerBlockEntity implemen
         Vec3 vector3d2 = vector3d.add(vector3d1.x * rayTraceDistance, vector3d1.y * rayTraceDistance, vector3d1.z * rayTraceDistance);
         //entity must be null to avoid recursive loop
         return this.level.clip(new ClipContext(vector3d, vector3d2, ClipContext.Block.VISUAL, rayTraceFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
+    }
+
+    private class RackItemHandler implements IItemHandlerModifiable {
+        @Override
+        public int getSlots() {
+            return SkateboardRackBlockEntity.this.getContainerSize();
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            validateSlot(slot);
+            return SkateboardRackBlockEntity.this.getItem(slot).copy();
+        }
+
+        @Override
+        public void setStackInSlot(int slot, ItemStack stack) {
+            validateSlot(slot);
+            SkateboardRackBlockEntity.this.setItem(slot, stack);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            validateSlot(slot);
+            if (stack.isEmpty() || !isItemValid(slot, stack)) {
+                return stack;
+            }
+            if (!SkateboardRackBlockEntity.this.getItem(slot).isEmpty()) {
+                return stack;
+            }
+
+            int acceptedCount = Math.min(stack.getCount(), getSlotLimit(slot));
+            ItemStack accepted = stack.copyWithCount(acceptedCount);
+            if (!simulate) {
+                SkateboardRackBlockEntity.this.setItem(slot, accepted);
+            }
+            if (acceptedCount == stack.getCount()) {
+                return ItemStack.EMPTY;
+            }
+            ItemStack remainder = stack.copy();
+            remainder.shrink(acceptedCount);
+            return remainder;
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            validateSlot(slot);
+            return ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            validateSlot(slot);
+            return SkateboardRackBlockEntity.this.getMaxStackSize();
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            validateSlot(slot);
+            return SkateboardRackBlockEntity.this.canPlaceItem(slot, stack);
+        }
+
+        private void validateSlot(int slot) {
+            if (slot < 0 || slot >= getSlots()) {
+                throw new RuntimeException("Slot " + slot + " not in valid range - [0," + getSlots() + ")");
+            }
+        }
     }
 }

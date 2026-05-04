@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class PlayerCapes {
-    private static final ResourceLocation DEV_CAPE_TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/entity/dev_cape.png");
-    private static final ResourceLocation BETA_TESTER_CAPE_TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/entity/beta_tester_cape.png");
+    private static final ResourceLocation DEV_CAPE_TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/entity/dev_cape.png");
+    private static final ResourceLocation BETA_TESTER_CAPE_TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/entity/beta_tester_cape.png");
     private static final List<UUID> DEVS = Lists.newArrayList(
             UUID.fromString("71363abe-fd03-49c9-940d-aae8b8209b7c"), //Alexthe666
             UUID.fromString("15be46af-ab50-4d04-acaf-bbf713faf1f9") //crydigo

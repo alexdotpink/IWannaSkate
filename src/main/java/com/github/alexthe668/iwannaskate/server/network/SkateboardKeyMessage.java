@@ -2,57 +2,41 @@ package com.github.alexthe668.iwannaskate.server.network;
 
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
 import com.github.alexthe668.iwannaskate.server.entity.SkateboardEntity;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.function.Supplier;
+public record SkateboardKeyMessage(int skateboardId, int playerId, int typeId) implements CustomPacketPayload {
+    public static final Type<SkateboardKeyMessage> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "skateboard_key"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, SkateboardKeyMessage> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.INT, SkateboardKeyMessage::skateboardId,
+            ByteBufCodecs.INT, SkateboardKeyMessage::playerId,
+            ByteBufCodecs.INT, SkateboardKeyMessage::typeId,
+            SkateboardKeyMessage::new);
 
-public class SkateboardKeyMessage {
-
-    public int skateboardId;
-    public int playerId;
-    public int type;
-
-    public SkateboardKeyMessage(int skateboardId, int playerId, int type) {
-        this.skateboardId = skateboardId;
-        this.playerId = playerId;
-        this.type = type;
-    }
-
-
-    public SkateboardKeyMessage() {
-    }
-
-    public static SkateboardKeyMessage read(FriendlyByteBuf buf) {
-        return new SkateboardKeyMessage(buf.readInt(), buf.readInt(), buf.readInt());
-    }
-
-    public static void write(SkateboardKeyMessage message, FriendlyByteBuf buf) {
-        buf.writeInt(message.skateboardId);
-        buf.writeInt(message.playerId);
-        buf.writeInt(message.type);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
     public static class Handler {
-        public Handler() {
-        }
-
-        public static void handle(SkateboardKeyMessage message, Supplier<NetworkEvent.Context> context) {
-            context.get().enqueueWork(() ->{
-                Player playerSided = context.get().getSender();
-                if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
-                    playerSided = IWannaSkateMod.PROXY.getClientSidePlayer();
+        public static void handle(SkateboardKeyMessage message, IPayloadContext context) {
+            context.enqueueWork(() -> {
+                Player playerSided = context.flow().isClientbound() ? IWannaSkateMod.PROXY.getClientSidePlayer() : context.player();
+                if (playerSided == null) {
+                    return;
                 }
-                Entity parent = playerSided.level().getEntity(message.skateboardId);
-                Entity keyPresser = playerSided.level().getEntity(message.playerId);
-                if(keyPresser != null && parent instanceof SkateboardEntity skateboard && keyPresser instanceof Player && keyPresser.isPassengerOfSameVehicle(skateboard)){
-                    skateboard.onKeyPacket(keyPresser, message.type);
+                Entity parent = playerSided.level().getEntity(message.skateboardId());
+                Entity keyPresser = playerSided.level().getEntity(message.playerId());
+                if (keyPresser instanceof Player && parent instanceof SkateboardEntity skateboard && keyPresser.isPassengerOfSameVehicle(skateboard)) {
+                    skateboard.onKeyPacket(keyPresser, message.typeId());
                 }
             });
-            context.get().setPacketHandled(true);
         }
     }
 }

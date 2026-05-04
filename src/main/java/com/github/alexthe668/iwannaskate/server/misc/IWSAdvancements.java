@@ -1,39 +1,36 @@
 package com.github.alexthe668.iwannaskate.server.misc;
 
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
-import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.advancements.CriterionTrigger;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class IWSAdvancements {
 
-    public static final IWSAdvancementTrigger TAKE_SKATE_DAMAGE = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "take_skate_damage"));
-    public static final IWSAdvancementTrigger TRICK_OLLIE = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "trick_ollie"));
-    public static final IWSAdvancementTrigger TRICK_KICKFLIP = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "trick_kickflip"));
-    public static final IWSAdvancementTrigger TRICK_GRIND = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "trick_grind"));
-    public static final IWSAdvancementTrigger SLOW_MOTION = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "slow_motion"));
-    public static final IWSAdvancementTrigger SKATE_10K = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "skate_10k"));
-    public static final IWSAdvancementTrigger SKATE_SURFING = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "skate_surfing"));
-    public static final IWSAdvancementTrigger SKATE_BASHING = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "skate_bashing"));
+    public static final DeferredRegister<CriterionTrigger<?>> DEF_REG = DeferredRegister.create(Registries.TRIGGER_TYPE, IWannaSkateMod.MODID);
 
-    public static final IWSAdvancementTrigger GIVE_VILLAGER_DRINK = new IWSAdvancementTrigger(new ResourceLocation(IWannaSkateMod.MODID, "give_villager_drink"));
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> TAKE_SKATE_DAMAGE = create("take_skate_damage");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> TRICK_OLLIE = create("trick_ollie");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> TRICK_KICKFLIP = create("trick_kickflip");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> TRICK_GRIND = create("trick_grind");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> SLOW_MOTION = create("slow_motion");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> SKATE_10K = create("skate_10k");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> SKATE_SURFING = create("skate_surfing");
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> SKATE_BASHING = create("skate_bashing");
 
-    public static void init(){
-        CriteriaTriggers.register(TAKE_SKATE_DAMAGE);
-        CriteriaTriggers.register(TRICK_OLLIE);
-        CriteriaTriggers.register(TRICK_KICKFLIP);
-        CriteriaTriggers.register(TRICK_GRIND);
-        CriteriaTriggers.register(SLOW_MOTION);
-        CriteriaTriggers.register(SKATE_10K);
-        CriteriaTriggers.register(SKATE_SURFING);
-        CriteriaTriggers.register(SKATE_BASHING);
-        CriteriaTriggers.register(GIVE_VILLAGER_DRINK);
+    public static final DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> GIVE_VILLAGER_DRINK = create("give_villager_drink");
+
+    private static DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> create(String name) {
+        return DEF_REG.register(name, () -> new IWSAdvancementTrigger(ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, name)));
     }
 
-    public static void trigger(Entity entity, IWSAdvancementTrigger trigger){
+    public static void trigger(Entity entity, DeferredHolder<CriterionTrigger<?>, IWSAdvancementTrigger> trigger){
         if(entity instanceof ServerPlayer serverPlayer){
-            trigger.trigger(serverPlayer);
+            trigger.get().trigger(serverPlayer);
         }
     }
 

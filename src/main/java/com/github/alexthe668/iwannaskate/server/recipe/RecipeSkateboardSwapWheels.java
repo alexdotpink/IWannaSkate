@@ -6,11 +6,11 @@ import com.github.alexthe668.iwannaskate.server.item.SkateboardData;
 import com.github.alexthe668.iwannaskate.server.item.SkateboardWheels;
 import com.github.alexthe668.iwannaskate.server.misc.IWSTags;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -22,15 +22,19 @@ import java.util.List;
 public class RecipeSkateboardSwapWheels extends CustomRecipe implements SpecialRecipeInGuideBook {
 
     public RecipeSkateboardSwapWheels(ResourceLocation name, CraftingBookCategory category) {
-        super(name, category);
+        super(category);
     }
 
-    public boolean matches(CraftingContainer craftingContainer, Level level) {
+    public RecipeSkateboardSwapWheels(CraftingBookCategory category) {
+        this(ResourceLocation.fromNamespaceAndPath("iwannaskate", "skateboard_swap_wheels"), category);
+    }
+
+    public boolean matches(CraftingInput craftingContainer, Level level) {
         ItemStack skateboard = ItemStack.EMPTY;
         ItemStack wheels1 = ItemStack.EMPTY;
         ItemStack wheels2 = ItemStack.EMPTY;
 
-        for(int i = 0; i < craftingContainer.getContainerSize(); ++i) {
+        for(int i = 0; i < craftingContainer.size(); ++i) {
             ItemStack itemstack2 = craftingContainer.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack2.is(IWSTags.SKATEBOARD_WHEELS)) {
@@ -59,11 +63,11 @@ public class RecipeSkateboardSwapWheels extends CustomRecipe implements SpecialR
     }
 
     @Override
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer craftingContainer) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(craftingContainer.getContainerSize(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput craftingContainer) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(craftingContainer.size(), ItemStack.EMPTY);
         ItemStack skateboard = ItemStack.EMPTY;
         List<Integer> wheelPositions = new ArrayList<>();
-        for(int i = 0; i < craftingContainer.getContainerSize(); ++i) {
+        for(int i = 0; i < craftingContainer.size(); ++i) {
             ItemStack itemstack2 = craftingContainer.getItem(i);
             if (itemstack2.is(IWSItemRegistry.SKATEBOARD.get())) {
                 skateboard = itemstack2;
@@ -81,11 +85,11 @@ public class RecipeSkateboardSwapWheels extends CustomRecipe implements SpecialR
     }
 
 
-    public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput container, HolderLookup.Provider registryAccess) {
         ItemStack wheels = ItemStack.EMPTY;
         ItemStack skateboard = ItemStack.EMPTY;
 
-        for(int i = 0; i < container.getContainerSize(); ++i) {
+        for(int i = 0; i < container.size(); ++i) {
             ItemStack itemstack2 = container.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack2.is(IWSTags.SKATEBOARD_WHEELS)) {

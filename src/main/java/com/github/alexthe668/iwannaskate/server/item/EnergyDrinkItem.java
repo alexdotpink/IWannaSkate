@@ -44,13 +44,13 @@ public class EnergyDrinkItem extends Item {
             CriteriaTriggers.CONSUME_ITEM.trigger(serverplayer, stack);
             serverplayer.awardStat(Stats.ITEM_USED.get(this));
         }
-        int effectLevel = livingEntity.hasEffect(IWSEffectRegistry.HIGH_OCTANE.get()) ? 1 + livingEntity.getEffect(IWSEffectRegistry.HIGH_OCTANE.get()).getAmplifier() : 0;
+        int effectLevel = livingEntity.hasEffect(IWSEffectRegistry.HIGH_OCTANE) ? 1 + livingEntity.getEffect(IWSEffectRegistry.HIGH_OCTANE).getAmplifier() : 0;
         if (!level.isClientSide) {
             int duration = 600;
             if(effectLevel >= 2){
-                livingEntity.addEffect(new MobEffectInstance(IWSEffectRegistry.OVERCAFFEINATED.get(), 180 * 20, 0));
+                livingEntity.addEffect(new MobEffectInstance(IWSEffectRegistry.OVERCAFFEINATED, 180 * 20, 0));
             }else{
-                livingEntity.addEffect(new MobEffectInstance(IWSEffectRegistry.HIGH_OCTANE.get(), duration * 20, effectLevel, false, false, true));
+                livingEntity.addEffect(new MobEffectInstance(IWSEffectRegistry.HIGH_OCTANE, duration * 20, effectLevel, false, false, true));
             }
         }
 

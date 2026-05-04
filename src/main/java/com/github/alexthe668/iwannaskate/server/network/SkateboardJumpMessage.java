@@ -2,58 +2,42 @@ package com.github.alexthe668.iwannaskate.server.network;
 
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
 import com.github.alexthe668.iwannaskate.server.entity.SkateboardEntity;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.function.Supplier;
+public record SkateboardJumpMessage(int skateboardId, int playerId, int jumpAmount) implements CustomPacketPayload {
+    public static final Type<SkateboardJumpMessage> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "skateboard_jump"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, SkateboardJumpMessage> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.INT, SkateboardJumpMessage::skateboardId,
+            ByteBufCodecs.INT, SkateboardJumpMessage::playerId,
+            ByteBufCodecs.INT, SkateboardJumpMessage::jumpAmount,
+            SkateboardJumpMessage::new);
 
-public class SkateboardJumpMessage {
-
-    public int skateboardId;
-    public int playerId;
-    public int jumpAmount;
-
-    public SkateboardJumpMessage(int skateboardId, int playerId, int jumpAmount) {
-        this.skateboardId = skateboardId;
-        this.playerId = playerId;
-        this.jumpAmount = jumpAmount;
-    }
-
-
-    public SkateboardJumpMessage() {
-    }
-
-    public static SkateboardJumpMessage read(FriendlyByteBuf buf) {
-        return new SkateboardJumpMessage(buf.readInt(), buf.readInt(), buf.readInt());
-    }
-
-    public static void write(SkateboardJumpMessage message, FriendlyByteBuf buf) {
-        buf.writeInt(message.skateboardId);
-        buf.writeInt(message.playerId);
-        buf.writeInt(message.jumpAmount);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
     public static class Handler {
-        public Handler() {
-        }
-
-        public static void handle(SkateboardJumpMessage message, Supplier<NetworkEvent.Context> context) {
-            context.get().enqueueWork(() ->{
-                Player playerSided = context.get().getSender();
-                if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
-                    playerSided = IWannaSkateMod.PROXY.getClientSidePlayer();
+        public static void handle(SkateboardJumpMessage message, IPayloadContext context) {
+            context.enqueueWork(() -> {
+                Player playerSided = context.flow().isClientbound() ? IWannaSkateMod.PROXY.getClientSidePlayer() : context.player();
+                if (playerSided == null) {
+                    return;
                 }
-                Entity parent = playerSided.level().getEntity(message.skateboardId);
-                Entity jumpPlayer = playerSided.level().getEntity(message.playerId);
-                if(jumpPlayer != null && parent instanceof SkateboardEntity skateboard && jumpPlayer instanceof Player && jumpPlayer.isPassengerOfSameVehicle(skateboard)){
-                    skateboard.handleStartJump(Mth.clamp(message.jumpAmount, 0, 1000));
+                Entity parent = playerSided.level().getEntity(message.skateboardId());
+                Entity jumpPlayer = playerSided.level().getEntity(message.playerId());
+                if (jumpPlayer instanceof Player && parent instanceof SkateboardEntity skateboard && jumpPlayer.isPassengerOfSameVehicle(skateboard)) {
+                    skateboard.handleStartJump(Mth.clamp(message.jumpAmount(), 0, 1000));
                 }
             });
-            context.get().setPacketHandled(true);
         }
     }
 }

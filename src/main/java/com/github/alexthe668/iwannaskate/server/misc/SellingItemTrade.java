@@ -6,6 +6,7 @@ import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.ItemCost;
 
 public class SellingItemTrade implements VillagerTrades.ItemListing {
     private final ItemStack tradeItem;
@@ -23,6 +24,6 @@ public class SellingItemTrade implements VillagerTrades.ItemListing {
     }
 
     public MerchantOffer getOffer(Entity tradingWith, RandomSource randomSource) {
-        return new MerchantOffer(new ItemStack(Items.EMERALD, this.price), tradeItem, this.maxUses, this.xpValue, this.priceMultiplier);
+        return new MerchantOffer(new ItemCost(Items.EMERALD, this.price), tradeItem, this.maxUses, this.xpValue, this.priceMultiplier);
     }
 }

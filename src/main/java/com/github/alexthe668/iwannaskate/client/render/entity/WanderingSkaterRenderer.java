@@ -18,7 +18,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 public class WanderingSkaterRenderer extends MobRenderer<WanderingSkaterEntity, WanderingSkaterModel> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/entity/wandering_skater.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/entity/wandering_skater.png");
 
     public WanderingSkaterRenderer(EntityRendererProvider.Context context) {
         super(context, new WanderingSkaterModel(context.bakeLayer(IWSModelLayers.WANDERING_SKATER)), 0.5F);

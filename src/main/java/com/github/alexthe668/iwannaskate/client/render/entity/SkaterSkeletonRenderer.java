@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 public class SkaterSkeletonRenderer extends MobRenderer<SkaterSkeletonEntity, SkeletonModel<SkaterSkeletonEntity>> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation("iwannaskate:textures/entity/skater_skeleton.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.parse("iwannaskate:textures/entity/skater_skeleton.png");
 
     public SkaterSkeletonRenderer(EntityRendererProvider.Context context) {
         this(context, IWSModelLayers.SKATER_SKELETON, ModelLayers.SKELETON_INNER_ARMOR, ModelLayers.SKELETON_OUTER_ARMOR);

@@ -41,7 +41,7 @@ public class LivingEntityRendererMixin {
         if(livingEntity.getVehicle() instanceof SkateboardEntity skateboard){
             SkatingModelPositioner.setupSkaterRotations(livingEntity, model, skateboard, poseStack, bodyYRot, partialTick);
         }
-        if(livingEntity.hasEffect(IWSEffectRegistry.OVERCAFFEINATED.get())){
+        if(livingEntity.hasEffect(IWSEffectRegistry.OVERCAFFEINATED)){
             poseStack.mulPose(Axis.YP.rotationDegrees((float)(Math.cos((double)ageInTicks * 3.25D) * Math.PI * (double)0.4F)));
         }
     }

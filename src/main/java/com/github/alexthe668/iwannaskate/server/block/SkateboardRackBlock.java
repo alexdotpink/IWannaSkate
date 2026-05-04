@@ -3,6 +3,7 @@ package com.github.alexthe668.iwannaskate.server.block;
 import com.github.alexthe668.iwannaskate.server.blockentity.IWSBlockEntityRegistry;
 import com.github.alexthe668.iwannaskate.server.blockentity.SkateboardRackBlockEntity;
 import com.github.alexthe668.iwannaskate.server.item.BaseSkateboardItem;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.Containers;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SkateboardRackBlock extends BaseEntityBlock {
 
+    public static final MapCodec<SkateboardRackBlock> CODEC = simpleCodec(SkateboardRackBlock::new);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     private static final VoxelShape NORTH_SHAPE = Shapes.or(Block.box(0.0D, 9.0D, 13.0D, 16.0D, 12.0D, 16.0D),
             Block.box(3.0D, 2.0D, 10.0D, 13.0D, 15.0D, 16.0D));
@@ -47,6 +49,11 @@ public class SkateboardRackBlock extends BaseEntityBlock {
     public SkateboardRackBlock(BlockBehaviour.Properties props) {
         super(props);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -113,14 +120,13 @@ public class SkateboardRackBlock extends BaseEntityBlock {
         return InteractionResult.CONSUME;
     }
 
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof SkateboardRackBlockEntity rack) {
-            int lookingAtSlot = target.getLocation().subtract(Vec3.atLowerCornerOf(pos)).y > 0.5F ? 0 : 1;
-            if(!rack.getItem(lookingAtSlot).isEmpty()){
-                return rack.getItem(lookingAtSlot).copy();
+            if(!rack.getItem(0).isEmpty()){
+                return rack.getItem(0).copy();
             }
         }
-        return super.getCloneItemStack(state, target, level, pos, player);
+        return super.getCloneItemStack(level, pos, state);
     }
 
     public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {

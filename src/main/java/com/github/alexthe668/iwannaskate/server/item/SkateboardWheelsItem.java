@@ -23,8 +23,8 @@ public class SkateboardWheelsItem extends Item {
         return wheelType;
     }
 
-    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
-        super.appendHoverText(stack, worldIn, tooltip, flagIn);
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+        super.appendHoverText(stack, context, tooltip, flagIn);
         if (wheelType == SkateboardWheels.EMERALD) {
             tooltip.add(Component.translatable("item.iwannaskate.skateboard_wheels_emerald.desc").withStyle(ChatFormatting.GRAY));
         }

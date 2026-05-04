@@ -39,7 +39,7 @@ public abstract class CapeLayerMixin extends RenderLayer<AbstractClientPlayer, P
     protected void iws_renderCapeLayer(PoseStack poseStack, MultiBufferSource bufferIn, int i, AbstractClientPlayer player, float f1, float f2, float partialTicks, float f4, float f5, float f6, CallbackInfo ci) {
         if(player.getVehicle() instanceof SkateboardEntity skateboard) {
             ci.cancel();
-            if (player.isCapeLoaded() && !player.isInvisible() && player.isModelPartShown(PlayerModelPart.CAPE) && player.getCloakTextureLocation() != null) {
+            if (!player.isInvisible() && player.isModelPartShown(PlayerModelPart.CAPE) && player.getSkin().capeTexture() != null) {
                 ItemStack itemstack = player.getItemBySlot(EquipmentSlot.CHEST);
                 if (!itemstack.is(Items.ELYTRA)) {
                     poseStack.pushPose();
@@ -49,7 +49,7 @@ public abstract class CapeLayerMixin extends RenderLayer<AbstractClientPlayer, P
                     float priorPoseProgress = 1F - poseProgress;
                     SkatingModelPositioner.rotateCapeForPose(player, poseStack, partialTicks, skateboard, skateboard.getPrevSkaterPose(), priorPoseProgress);
                     SkatingModelPositioner.rotateCapeForPose(player, poseStack, partialTicks, skateboard, skateboard.getSkaterPose(), poseProgress);
-                    VertexConsumer vertexconsumer = bufferIn.getBuffer(RenderType.entitySolid(player.getCloakTextureLocation()));
+                    VertexConsumer vertexconsumer = bufferIn.getBuffer(RenderType.entitySolid(player.getSkin().capeTexture()));
                     getParentModel().renderCloak(poseStack, vertexconsumer, i, OverlayTexture.NO_OVERLAY);
                     poseStack.popPose();
                 }

@@ -7,7 +7,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.registries.RegistryObject;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -44,14 +44,14 @@ public enum SkateboardWheels {
 
     private final ResourceLocation texture;
     private final boolean isTrade;
-    private RegistryObject<Item> itemRegistryObject;
+    private Supplier<Item> itemRegistryObject;
 
     SkateboardWheels() {
         this(false);
     }
 
     SkateboardWheels(boolean isTrade) {
-        this.texture = new ResourceLocation(IWannaSkateMod.MODID, "textures/entity/skateboard/wheels/wheels_" + this.name().toLowerCase() + ".png");
+        this.texture = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/entity/skateboard/wheels/wheels_" + this.name().toLowerCase() + ".png");
         this.isTrade = isTrade;
     }
 
@@ -73,7 +73,7 @@ public enum SkateboardWheels {
         return texture;
     }
 
-    public RegistryObject<Item> getItemRegistryObject() {
+    public Supplier<Item> getItemRegistryObject() {
         return itemRegistryObject;
     }
 

@@ -13,7 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 
 public class IWSDamageTypes {
 
-    public static final ResourceKey<DamageType> SKATE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(IWannaSkateMod.MODID, "skate"));
+    public static final ResourceKey<DamageType> SKATE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "skate"));
     public static DamageSource causeSkateDamage(RegistryAccess registryAccess){
         return new DamageSourceRandomMessages(registryAccess.registry(Registries.DAMAGE_TYPE).get().getHolderOrThrow(SKATE_DAMAGE));
     }

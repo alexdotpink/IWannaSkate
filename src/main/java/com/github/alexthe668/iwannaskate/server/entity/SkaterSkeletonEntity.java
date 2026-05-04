@@ -12,6 +12,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -36,7 +37,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -59,7 +60,7 @@ public class SkaterSkeletonEntity extends AbstractSkeleton {
 
     public static ItemStack createSkateboard() {
         ItemStack itemStack = new ItemStack(IWSItemRegistry.SKATEBOARD.get());
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(Items.DARK_OAK_SLAB));
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(Items.DARK_OAK_SLAB));
         data.setGripTape(DyeColor.BLACK);
         CompoundTag bannerTag = new CompoundTag();
         ListTag patterns = new ListTag();
@@ -82,7 +83,7 @@ public class SkaterSkeletonEntity extends AbstractSkeleton {
         bannerTag.putInt("Base", DyeColor.RED.getId());
         data.setBanner(bannerTag);
         SkateboardData.setStackData(itemStack, data);
-        itemStack.setHoverName(Component.translatable("item.iwannaskate.skateboard.skater_skeleton").withStyle(ChatFormatting.DARK_RED));
+        itemStack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.iwannaskate.skateboard.skater_skeleton").withStyle(ChatFormatting.DARK_RED));
         return itemStack;
     }
 
@@ -92,10 +93,10 @@ public class SkaterSkeletonEntity extends AbstractSkeleton {
         return prev && (spawnType == MobSpawnType.SPAWNER || IWannaSkateMod.COMMON_CONFIG.spawnSkaterSkeletons.get() && !levelAccessor.getBiome(blockpos).is(IWSTags.NO_MONSTERS) && levelAccessor.getBlockState(blockpos).is(IWSTags.SPAWNS_SKATER_SKELETONS) && levelAccessor.getBlockState(blockpos).isValidSpawn(levelAccessor, blockpos, type));
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SKATEBOARD_UUID, Optional.empty());
-        this.entityData.define(SKATEBOARD_ID, -1);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SKATEBOARD_UUID, Optional.empty());
+        builder.define(SKATEBOARD_ID, -1);
     }
 
     public void readAdditionalSaveData(CompoundTag compound) {
@@ -146,7 +147,7 @@ public class SkaterSkeletonEntity extends AbstractSkeleton {
 
     @Nullable
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData groupData, @Nullable CompoundTag tag) {
-        SpawnGroupData spawngroupdata = super.finalizeSpawn(level, difficulty, spawnType, groupData, tag);
+        SpawnGroupData spawngroupdata = super.finalizeSpawn(level, difficulty, spawnType, groupData);
         this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(2.0D);
         this.reassessWeaponGoal();
         return spawngroupdata;
@@ -261,20 +262,19 @@ public class SkaterSkeletonEntity extends AbstractSkeleton {
     }
 
     @Override
-    protected void dropAllDeathLoot(DamageSource source) {
+    protected void dropAllDeathLoot(ServerLevel serverLevel, DamageSource source) {
         Entity entity = source.getEntity();
 
-        int i = net.minecraftforge.common.ForgeHooks.getLootingLevel(this, entity, source);
         this.captureDrops(new java.util.ArrayList<>());
 
         boolean flag = this.lastHurtByPlayerTime > 0;
         if (this.shouldDropLoot() && this.level().getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
             this.dropFromLootTable(source, flag);
-            this.dropCustomDeathLoot(source, i, flag);
+            this.dropCustomDeathLoot(serverLevel, source, flag);
         }
         //music disc check
         this.dropEquipment();
-        this.dropExperience();
+        this.dropExperience(entity);
 
         Collection<ItemEntity> drops = captureDrops(null);
         Collection<ItemEntity> processedDrops = new ArrayList<>();
@@ -294,7 +294,7 @@ public class SkaterSkeletonEntity extends AbstractSkeleton {
                 processedDrops.add(itemEntity);
             }
         }
-        if (!net.minecraftforge.common.ForgeHooks.onLivingDrops(this, source, processedDrops, i, lastHurtByPlayerTime > 0))
+        if (!net.neoforged.neoforge.common.CommonHooks.onLivingDrops(this, source, processedDrops, lastHurtByPlayerTime > 0))
             processedDrops.forEach(e -> level().addFreshEntity(e));
     }
 }

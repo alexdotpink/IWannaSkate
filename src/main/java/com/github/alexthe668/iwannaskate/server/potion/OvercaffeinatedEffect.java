@@ -11,13 +11,14 @@ public class OvercaffeinatedEffect extends MobEffect {
         super(MobEffectCategory.HARMFUL, 0X538345);
     }
 
-    public void applyEffectTick(LivingEntity entity, int tick) {
+    public boolean applyEffectTick(LivingEntity entity, int tick) {
         if (entity instanceof Player player) {
             player.causeFoodExhaustion(0.1F * (float)(tick + 1));
         }
         if(entity.getHealth() > entity.getMaxHealth() * 0.25F && entity.getRandom().nextInt(10) == 0){
             entity.hurt(entity.damageSources().magic(), 1.0F);
         }
+        return true;
     }
 
     public boolean isDurationEffectTick(int tick1, int tick2) {

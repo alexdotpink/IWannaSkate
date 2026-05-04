@@ -3,6 +3,7 @@ package com.github.alexthe668.iwannaskate.server.item;
 import com.github.alexthe668.iwannaskate.IWannaSkateMod;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -12,9 +13,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.entity.BannerPattern;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -28,7 +29,7 @@ public class SkateboardData {
     @Nullable
     private CompoundTag bannerTag = null;
 
-    public static final SkateboardData DEFAULT = new SkateboardData(new ResourceLocation("minecraft:oak_slab"));
+    public static final SkateboardData DEFAULT = new SkateboardData(ResourceLocation.parse("minecraft:oak_slab"));
 
     public SkateboardData(ResourceLocation woodBlock) {
         this.woodBlock = woodBlock;
@@ -37,9 +38,9 @@ public class SkateboardData {
     public static SkateboardData fromTag(CompoundTag tag) {
         ResourceLocation location;
         if (tag.contains("MadeOf")) {
-            location = new ResourceLocation(tag.getString("MadeOf"));
+            location = ResourceLocation.parse(tag.getString("MadeOf"));
         } else {
-            location = new ResourceLocation("minecraft:oak_slab");
+            location = ResourceLocation.parse("minecraft:oak_slab");
         }
         SkateboardData data = new SkateboardData(location);
         if (tag.contains("Banner")) {
@@ -116,7 +117,7 @@ public class SkateboardData {
 
     public void appendHoverText(List<Component> tooltip, ItemStack stack) {
         ChatFormatting chatColor = ChatFormatting.GRAY;
-        Item material = ForgeRegistries.ITEMS.getValue(this.getWoodBlock());
+        Item material = BuiltInRegistries.ITEM.get(this.getWoodBlock());
         MutableComponent madeOfName = Component.translatable(material.getDescriptionId());
         tooltip.add(Component.translatable("item.iwannaskate.skateboard.made_of").withStyle(chatColor).append(" ").append(madeOfName.withStyle(chatColor)));
         if(this.hasGripTape()){
@@ -132,37 +133,18 @@ public class SkateboardData {
             DyeColor base = DyeColor.byId(compoundtag.getInt("Base"));
             MutableComponent baseText = Component.translatable("item.iwannaskate.skateboard.banner_base_" + base.getName()).withStyle(chatColor);
             tooltip.add(Component.literal("  -").withStyle(chatColor).append(baseText));
-
-            if (compoundtag != null && compoundtag.contains("Patterns")) {
-                ListTag listtag = compoundtag.getList("Patterns", 10);
-                for(int i = 0; i < listtag.size() && i < 6; ++i) {
-                    CompoundTag compoundtag1 = listtag.getCompound(i);
-                    DyeColor dyecolor = DyeColor.byId(compoundtag1.getInt("Color"));
-                    Holder<BannerPattern> holder = BannerPattern.byHash(compoundtag1.getString("Pattern"));
-                    if (holder != null) {
-                        holder.unwrapKey().map((p_220002_) -> {
-                            return p_220002_.location().toShortLanguageKey();
-                        }).ifPresent((p_220006_) -> {
-                            net.minecraft.resources.ResourceLocation fileLoc = new net.minecraft.resources.ResourceLocation(p_220006_);
-                            MutableComponent patternText = Component.translatable("block." + fileLoc.getNamespace() + ".banner." + fileLoc.getPath() + "." + dyecolor.getName()).withStyle(chatColor);
-                            tooltip.add(Component.literal("  -").withStyle(chatColor).append(patternText));
-                        });
-                    }
-                }
-            }
         }
         if(stack.isEnchanted()){
             tooltip.add(Component.literal(""));
             tooltip.add(Component.translatable("item.iwannaskate.skateboard.enchanted").withStyle(chatColor, ChatFormatting.UNDERLINE));
-            ListTag enchantmentList = stack.getEnchantmentTags();
+            var enchantmentList = stack.getEnchantments().entrySet();
             int maxPreview = 4;
-            for(int i = 0; i < enchantmentList.size(); ++i) {
+            int i = 0;
+            for(var entry : enchantmentList) {
                 if(i < maxPreview || IWannaSkateMod.PROXY.isKeyDown(1)){
-                    CompoundTag compoundtag = enchantmentList.getCompound(i);
-                    ForgeRegistries.ENCHANTMENTS.getDelegate(EnchantmentHelper.getEnchantmentId(compoundtag)).ifPresent((enchantment) -> {
-                        tooltip.add(Component.literal("  -").withStyle(chatColor).append(enchantment.value().getFullname(EnchantmentHelper.getEnchantmentLevel(compoundtag))));
-                    });
+                    tooltip.add(Component.literal("  -").withStyle(chatColor).append(entry.getKey().value().description().copy().append(" " + entry.getIntValue())));
                 }
+                i++;
             }
             if(enchantmentList.size() >= maxPreview && !IWannaSkateMod.PROXY.isKeyDown(1)){
                 tooltip.add(Component.translatable("item.iwannaskate.skateboard.show_more").withStyle(chatColor));
@@ -172,7 +154,7 @@ public class SkateboardData {
 
     @NotNull
     public static SkateboardData fromStack(ItemStack stack){
-        CompoundTag compoundtag = stack.getTag();
+        CompoundTag compoundtag = getCustomTag(stack);
         if(compoundtag != null && compoundtag.contains("Skateboard")){
             return SkateboardData.fromTag(compoundtag.getCompound("Skateboard"));
         }else {
@@ -181,9 +163,17 @@ public class SkateboardData {
     }
 
     public static void setStackData(ItemStack stack, SkateboardData data){
-        CompoundTag tag = stack.hasTag() ? stack.getTag() : new CompoundTag();
+        CompoundTag tag = getCustomTag(stack);
         tag.put("Skateboard", data.toTag());
-        stack.setTag(tag);
+        setCustomTag(stack, tag);
+    }
+
+    public static CompoundTag getCustomTag(ItemStack stack) {
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+    }
+
+    public static void setCustomTag(ItemStack stack, CompoundTag tag) {
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
 }

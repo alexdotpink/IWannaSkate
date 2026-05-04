@@ -30,46 +30,37 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.neoforge.client.event.*;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Mod.EventBusSubscriber(modid = IWannaSkateMod.MODID, value = Dist.CLIENT)
 public class ClientProxy extends CommonProxy {
 
     public static final Map<Integer, SkateboardSound> SKATEBOARD_SOUND_MAP = new HashMap<>();
-    protected static final ResourceLocation OVERCAFFENIATED_OVERLAY = new ResourceLocation(IWannaSkateMod.MODID, "textures/gui/overcaffeniated_overlay.png");
-    private static final ResourceLocation SKATEBOARD_INDICATOR_TEXTURE = new ResourceLocation(IWannaSkateMod.MODID, "textures/gui/skateboard_peddle_indicator.png");
+    protected static final ResourceLocation OVERCAFFENIATED_OVERLAY = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/gui/overcaffeniated_overlay.png");
+    private static final ResourceLocation SKATEBOARD_INDICATOR_TEXTURE = ResourceLocation.fromNamespaceAndPath(IWannaSkateMod.MODID, "textures/gui/skateboard_peddle_indicator.png");
 
     private static float prevCameraRoll = 0;
     private static float cameraRoll = 0;
 
-    public static void onTexturesLoaded(TextureStitchEvent.Post event) {
+    public static void onTexturesLoaded(TextureAtlasStitchedEvent event) {
         BoardColorSampler.sampleColorsOnLoad();
     }
 
     public static void setupItemColors(RegisterColorHandlersEvent.Item event) {
         IWannaSkateMod.LOGGER.info("loaded in item colorizer");
-        if(IWSItemRegistry.BEANIE.isPresent()){
-            event.register((stack, colorIn) -> colorIn != 0 ? -1 : ((DyeableHatItem) stack.getItem()).getColor(stack), IWSItemRegistry.BEANIE.get());
-        }
-        if(IWSItemRegistry.SKATER_CAP.isPresent()){
-            event.register((stack, colorIn) -> colorIn != 0 ? -1 : ((DyeableHatItem) stack.getItem()).getColor(stack), IWSItemRegistry.SKATER_CAP.get());
-        }
+        event.register((stack, colorIn) -> colorIn != 0 ? -1 : ((DyeableHatItem) stack.getItem()).getColor(stack), IWSItemRegistry.BEANIE.get());
+        event.register((stack, colorIn) -> colorIn != 0 ? -1 : ((DyeableHatItem) stack.getItem()).getColor(stack), IWSItemRegistry.SKATER_CAP.get());
     }
 
     public static void setupParticles(RegisterParticleProvidersEvent registry) {
@@ -81,10 +72,8 @@ public class ClientProxy extends CommonProxy {
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event){
-        if(event.phase == TickEvent.Phase.END){
-            IWSItemstackRenderer.tick();
-        }
+    public void onClientTick(ClientTickEvent.Post event){
+        IWSItemstackRenderer.tick();
     }
 
     @SubscribeEvent
@@ -95,17 +84,17 @@ public class ClientProxy extends CommonProxy {
     }
 
     @SubscribeEvent
-    public void onPreRenderGuiOverlay(RenderGuiOverlayEvent.Pre event) {
-        if (event.getOverlay().id().equals(VanillaGuiOverlay.EXPERIENCE_BAR.id()) && IWannaSkateMod.CLIENT_CONFIG.hideExperienceBar.get() && getClientSidePlayer().getVehicle() instanceof SkateboardEntity skateboard) {
+    public void onPreRenderGuiOverlay(RenderGuiLayerEvent.Pre event) {
+        if (event.getName().equals(VanillaGuiLayers.EXPERIENCE_BAR) && IWannaSkateMod.CLIENT_CONFIG.hideExperienceBar.get() && getClientSidePlayer().getVehicle() instanceof SkateboardEntity skateboard) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
-    public void onPostRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
-        if (event.getOverlay().id().equals(VanillaGuiOverlay.JUMP_BAR.id()) && getClientSidePlayer().getVehicle() instanceof SkateboardEntity skateboard) {
-            int screenWidth = event.getWindow().getGuiScaledWidth();
-            int screenHeight = event.getWindow().getGuiScaledHeight();
+    public void onPostRenderGuiOverlay(RenderGuiLayerEvent.Post event) {
+        if (event.getName().equals(VanillaGuiLayers.JUMP_METER) && getClientSidePlayer().getVehicle() instanceof SkateboardEntity skateboard) {
+            int screenWidth = event.getGuiGraphics().guiWidth();
+            int screenHeight = event.getGuiGraphics().guiHeight();
             if(IWannaSkateMod.CLIENT_CONFIG.showInertiaIndicator.get()){
                 int j = screenWidth / 2 - IWannaSkateMod.CLIENT_CONFIG.inertiaIndicatorX.get();
                 int k = screenHeight - IWannaSkateMod.CLIENT_CONFIG.inertiaIndicatorY.get();
@@ -116,23 +105,16 @@ public class ClientProxy extends CommonProxy {
                 event.getGuiGraphics().pose().popPose();
             }
         }
-        if (event.getOverlay().id().equals(VanillaGuiOverlay.VIGNETTE.id()) && Minecraft.getInstance().player.hasEffect(IWSEffectRegistry.OVERCAFFEINATED.get()) && IWannaSkateMod.CLIENT_CONFIG.overcaffeniatedOverlay.get()) {
-            int screenWidth = event.getWindow().getGuiScaledWidth();
-            int screenHeight = event.getWindow().getGuiScaledHeight();
+        if (event.getName().equals(VanillaGuiLayers.CAMERA_OVERLAYS) && Minecraft.getInstance().player.hasEffect(IWSEffectRegistry.OVERCAFFEINATED) && IWannaSkateMod.CLIENT_CONFIG.overcaffeniatedOverlay.get()) {
+            int screenWidth = event.getGuiGraphics().guiWidth();
+            int screenHeight = event.getGuiGraphics().guiHeight();
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
             RenderSystem.defaultBlendFunc();
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1F);
             RenderSystem.setShaderTexture(0, OVERCAFFENIATED_OVERLAY);
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder bufferbuilder = tesselator.getBuilder();
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-            bufferbuilder.vertex(0.0D, screenHeight, -90.0D).uv(0.0F, 1.0F).endVertex();
-            bufferbuilder.vertex(screenWidth, screenHeight, -90.0D).uv(1.0F, 1.0F).endVertex();
-            bufferbuilder.vertex(screenWidth, 0.0D, -90.0D).uv(1.0F, 0.0F).endVertex();
-            bufferbuilder.vertex(0.0D, 0.0D, -90.0D).uv(0.0F, 0.0F).endVertex();
-            tesselator.end();
+            event.getGuiGraphics().blit(OVERCAFFENIATED_OVERLAY, 0, 0, 0, 0, screenWidth, screenHeight, screenWidth, screenHeight);
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -141,26 +123,23 @@ public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent
     public void onComputeFOV(ComputeFovModifierEvent event) {
-        if (Minecraft.getInstance().player.hasEffect(IWSEffectRegistry.OVERCAFFEINATED.get()) && IWannaSkateMod.CLIENT_CONFIG.overcaffeniatedOverlay.get()) {
+        if (Minecraft.getInstance().player.hasEffect(IWSEffectRegistry.OVERCAFFEINATED) && IWannaSkateMod.CLIENT_CONFIG.overcaffeniatedOverlay.get()) {
             event.setNewFovModifier(event.getFovModifier() + 1);
         }
     }
 
-    @SubscribeEvent
     public void onRegisterClientReloadListener(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(ModelRootRegistry.INSTANCE);
     }
 
-    public void init() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public void init(IEventBus modEventBus) {
         modEventBus.addListener(ClientProxy::setupParticles);
         modEventBus.addListener(ClientProxy::setupItemColors);
+        modEventBus.addListener(ClientProxy::onTexturesLoaded);
+        modEventBus.addListener(this::onRegisterClientReloadListener);
     }
 
     public void clientInit() {
-        Minecraft.getInstance().renderBuffers().fixedBuffers.put(IWSRenderTypes.SKATEBOARD_GLINT, new BufferBuilder(IWSRenderTypes.SKATEBOARD_GLINT.bufferSize()));
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        modEventBus.addListener(ClientProxy::onTexturesLoaded);
         EntityRenderers.register(IWSEntityRegistry.SKATEBOARD.get(), SkateboardRenderer::new);
         EntityRenderers.register(IWSEntityRegistry.SKATER_SKELETON.get(), SkaterSkeletonRenderer::new);
         EntityRenderers.register(IWSEntityRegistry.WANDERING_SKATER.get(), WanderingSkaterRenderer::new);
@@ -206,7 +185,6 @@ public class ClientProxy extends CommonProxy {
     }
 
     public void reloadConfig() {
-        Minecraft.getInstance().timer.msPerTick = 50.0F;
     }
 
     public void openBookGUI(ItemStack book) {
@@ -215,19 +193,17 @@ public class ClientProxy extends CommonProxy {
     }
 
     @SubscribeEvent
-    public void clientTick(TickEvent.ClientTickEvent event) {
-        if(event.phase == TickEvent.Phase.START) {
-            float targetRot = 0;
-            if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getVehicle() instanceof SkateboardEntity skateboard && IWannaSkateMod.CLIENT_CONFIG.rotateCameraOnBoard.get()) {
-                float partialTick = Minecraft.getInstance().getPartialTick();
-                targetRot = skateboard.getZRot(partialTick);
-                if (Math.abs(targetRot) <= 1.0F) {
-                    targetRot = 0;
-                }
+    public void clientTick(ClientTickEvent.Post event) {
+        float targetRot = 0;
+        if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getVehicle() instanceof SkateboardEntity skateboard && IWannaSkateMod.CLIENT_CONFIG.rotateCameraOnBoard.get()) {
+            float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+            targetRot = skateboard.getZRot(partialTick);
+            if (Math.abs(targetRot) <= 1.0F) {
+                targetRot = 0;
             }
-            prevCameraRoll = cameraRoll;
-            cameraRoll = targetRot;
         }
+        prevCameraRoll = cameraRoll;
+        cameraRoll = targetRot;
     }
 
 

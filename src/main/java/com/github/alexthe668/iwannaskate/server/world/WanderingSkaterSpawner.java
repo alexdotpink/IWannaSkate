@@ -118,7 +118,7 @@ public class WanderingSkaterSpawner  {
             int k = center.getZ() + this.random.nextInt(xzDistance * 2) - xzDistance;
             int l = this.world.getHeight(Heightmap.Types.WORLD_SURFACE, j, k);
             BlockPos blockpos1 = new BlockPos(j, l, k);
-            if (NaturalSpawner.isSpawnPositionOk(SpawnPlacements.Type.ON_GROUND, this.world, blockpos1, IWSEntityRegistry.WANDERING_SKATER.get())) {
+            if (SpawnPlacements.isSpawnPositionOk(IWSEntityRegistry.WANDERING_SKATER.get(), this.world, blockpos1)) {
                 blockpos = blockpos1;
                 break;
             }

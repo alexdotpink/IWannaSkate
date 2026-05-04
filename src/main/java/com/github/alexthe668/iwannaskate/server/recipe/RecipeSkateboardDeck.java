@@ -5,27 +5,33 @@ import com.github.alexthe668.iwannaskate.server.item.IWSItemRegistry;
 import com.github.alexthe668.iwannaskate.server.item.SkateboardData;
 import com.github.alexthe668.iwannaskate.server.misc.IWSTags;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import java.util.Optional;
 
 public class RecipeSkateboardDeck  extends ShapedRecipe implements SpecialRecipeInGuideBook {
     public RecipeSkateboardDeck(ResourceLocation name, CraftingBookCategory category) {
-        super(name, "", category, 3, 3, NonNullList.of(Ingredient.EMPTY, Ingredient.of(IWSTags.DECK_MATERIALS), Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.of(IWSTags.DECK_MATERIALS), Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.of(IWSTags.DECK_MATERIALS)), new ItemStack(IWSItemRegistry.SKATEBOARD_DECK.get()));
+        super("", category, new ShapedRecipePattern(3, 3, NonNullList.of(Ingredient.EMPTY, Ingredient.of(IWSTags.DECK_MATERIALS), Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.of(IWSTags.DECK_MATERIALS), Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.EMPTY, Ingredient.of(IWSTags.DECK_MATERIALS)), Optional.empty()), new ItemStack(IWSItemRegistry.SKATEBOARD_DECK.get()));
     }
 
-    public boolean matches(CraftingContainer container, Level level) {
+    public RecipeSkateboardDeck(CraftingBookCategory category) {
+        this(ResourceLocation.fromNamespaceAndPath("iwannaskate", "skateboard_deck"), category);
+    }
+
+    public boolean matches(CraftingInput container, Level level) {
         if(super.matches(container, level)){
             ItemStack lastTagged = ItemStack.EMPTY;
-            for(int i = 0; i < container.getContainerSize(); i++){
+            for(int i = 0; i < container.size(); i++){
                 if(container.getItem(i).is(IWSTags.DECK_MATERIALS)){
                     if(!lastTagged.isEmpty() && !ItemStack.isSameItem(lastTagged, container.getItem(i))){
                         return false;
@@ -40,22 +46,20 @@ public class RecipeSkateboardDeck  extends ShapedRecipe implements SpecialRecipe
     }
 
 
-    public ItemStack getResultItem() {
+    public ItemStack getResultItem(HolderLookup.Provider provider) {
         return new ItemStack(IWSItemRegistry.SKATEBOARD_DECK.get());
     }
 
-    public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput container, HolderLookup.Provider registryAccess) {
         ItemStack lastTagged = ItemStack.EMPTY;
-        for(int i = 0; i < container.getContainerSize(); i++){
+        for(int i = 0; i < container.size(); i++){
             if(container.getItem(i).is(IWSTags.DECK_MATERIALS)){
                 lastTagged = container.getItem(i);
             }
         }
         ItemStack deck = new ItemStack(IWSItemRegistry.SKATEBOARD_DECK.get());
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(lastTagged.getItem()));
-        CompoundTag deckTag = new CompoundTag();
-        deckTag.put("Skateboard", data.toTag());
-        deck.setTag(deckTag);
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(lastTagged.getItem()));
+        SkateboardData.setStackData(deck, data);
         return deck;
     }
 
@@ -85,13 +89,10 @@ public class RecipeSkateboardDeck  extends ShapedRecipe implements SpecialRecipe
             }
         }
         ItemStack deck = new ItemStack(IWSItemRegistry.SKATEBOARD_DECK.get());
-        SkateboardData data = new SkateboardData(ForgeRegistries.ITEMS.getKey(lastTagged.getItem()));
-        CompoundTag deckTag = new CompoundTag();
-        deckTag.put("Skateboard", data.toTag());
-        deck.setTag(deckTag);
+        SkateboardData data = new SkateboardData(BuiltInRegistries.ITEM.getKey(lastTagged.getItem()));
+        SkateboardData.setStackData(deck, data);
         return deck;
     }
 
 
 }
-

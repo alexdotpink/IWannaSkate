@@ -54,10 +54,10 @@ public abstract class VillagerMixin extends AbstractVillager implements HasAnima
     @Inject(
             at = {@At("TAIL")},
             remap = true,
-            method = {"Lnet/minecraft/world/entity/npc/Villager;defineSynchedData()V"}
+            method = {"defineSynchedData"}
     )
-    private void iws_registerData(CallbackInfo ci) {
-        this.entityData.define(IWS_ANIMATION_FLAGS, 0);
+    private void iws_registerData(SynchedEntityData.Builder builder, CallbackInfo ci) {
+        builder.define(IWS_ANIMATION_FLAGS, 0);
     }
 
 
@@ -122,7 +122,7 @@ public abstract class VillagerMixin extends AbstractVillager implements HasAnima
                     stack.shrink(1);
                     if (random.nextBoolean()) {
                         this.setVillagerData(this.getVillagerData().setProfession(VillagerProfession.NITWIT));
-                        this.addEffect(new MobEffectInstance(IWSEffectRegistry.OVERCAFFEINATED.get(), 1200));
+                        this.addEffect(new MobEffectInstance(IWSEffectRegistry.OVERCAFFEINATED, 1200));
                     }
                 }
             }
@@ -144,12 +144,12 @@ public abstract class VillagerMixin extends AbstractVillager implements HasAnima
                 if (this.isPassenger() && this.getVehicle() instanceof SkateboardEntity) {
                     skateNitwitTime++;
                 }
-                if (skateNitwitTime > 300 && net.minecraftforge.event.ForgeEventFactory.canLivingConvert(this, IWSEntityRegistry.WANDERING_SKATER.get(), (timer) -> this.skateNitwitTime = timer)) {
+                if (skateNitwitTime > 300 && net.neoforged.neoforge.event.EventHooks.canLivingConvert(this, IWSEntityRegistry.WANDERING_SKATER.get(), (timer) -> this.skateNitwitTime = timer)) {
                     this.playSound(SoundEvents.ZOMBIE_VILLAGER_CONVERTED);
                     WanderingSkaterEntity wanderingSkaterEntity = this.convertTo(IWSEntityRegistry.WANDERING_SKATER.get(), true);
                     wanderingSkaterEntity.setNoDespawn(true);
                     if (wanderingSkaterEntity != null) {
-                        net.minecraftforge.event.ForgeEventFactory.onLivingConvert(this, wanderingSkaterEntity);
+                        net.neoforged.neoforge.event.EventHooks.onLivingConvert(this, wanderingSkaterEntity);
                     }
                 }
             }
